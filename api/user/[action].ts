@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { getTursoClient, authenticateToken, bcrypt, setCors } from "../_utils";
+import { getTursoClient, authenticateToken, bcrypt, setCors } from "../_utils.js";
 
 async function handleStats(req: VercelRequest, res: VercelResponse, userId: number) {
   const client = getTursoClient();

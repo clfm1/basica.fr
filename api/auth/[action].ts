@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { getTursoClient, bcrypt, signToken, sendEmail, setCors } from "../_utils";
+import { getTursoClient, bcrypt, signToken, sendEmail, setCors } from "../_utils.js";
 
 async function handleLogin(req: VercelRequest, res: VercelResponse) {
   const { email, password } = req.body;
