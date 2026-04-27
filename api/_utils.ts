@@ -1,4 +1,4 @@
-import { createClient } from "@libsql/client";
+import { createClient } from "@libsql/client/web";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import Stripe from "stripe";
@@ -11,15 +11,25 @@ const JWT_SECRET = process.env.JWT_SECRET || "basico-secret-key-123";
 let tursoClient: any = null;
 export function getTursoClient() {
   if (!tursoClient) {
+    console.log("[DB] Initializing Turso client...");
     const url = process.env.TURSO_DATABASE_URL;
     const authToken = process.env.TURSO_AUTH_TOKEN;
+    
     if (!url) {
+      console.error("[DB] CRITICAL ERROR: TURSO_DATABASE_URL is missing!");
       throw new Error("TURSO_DATABASE_URL environment variable is required");
     }
-    tursoClient = createClient({
-      url: url,
-      authToken: authToken,
-    });
+    
+    try {
+      tursoClient = createClient({
+        url: url,
+        authToken: authToken,
+      });
+      console.log("[DB] Turso client initialized successfully.");
+    } catch (e: any) {
+      console.error("[DB] CRITICAL ERROR: Failed to create client!", e);
+      throw e;
+    }
   }
   return tursoClient;
 }

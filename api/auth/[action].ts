@@ -124,22 +124,40 @@ async function handleResetPassword(req: VercelRequest, res: VercelResponse) {
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  setCors(res);
-  if (req.method === "OPTIONS") return res.status(200).end();
-  if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+  console.log(`[AUTH] Incoming request: ${req.method} /api/auth/${req.query.action}`);
+  
+  try {
+    setCors(res);
+    if (req.method === "OPTIONS") return res.status(200).end();
+    if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
-  const { action } = req.query;
+    const { action } = req.query;
+    console.log(`[AUTH] Action resolved: ${action}`);
 
-  switch (action) {
-    case "login":
-      return handleLogin(req, res);
-    case "register":
-      return handleRegister(req, res);
-    case "forgot-password":
-      return handleForgotPassword(req, res);
-    case "reset-password":
-      return handleResetPassword(req, res);
-    default:
-      return res.status(404).json({ error: "Not found" });
+    switch (action) {
+      case "login":
+        console.log(`[AUTH] Executing handleLogin...`);
+        return await handleLogin(req, res);
+      case "register":
+        console.log(`[AUTH] Executing handleRegister...`);
+        return await handleRegister(req, res);
+      case "forgot-password":
+        console.log(`[AUTH] Executing handleForgotPassword...`);
+        return await handleForgotPassword(req, res);
+      case "reset-password":
+        console.log(`[AUTH] Executing handleResetPassword...`);
+        return await handleResetPassword(req, res);
+      default:
+        console.log(`[AUTH] Action not found: ${action}`);
+        return res.status(404).json({ error: "Not found" });
+    }
+  } catch (error: any) {
+    console.error(`[AUTH] FATAL ERROR IN HANDLER:`, error);
+    return res.status(500).json({ 
+      error: "Internal Server Error", 
+      message: error.message, 
+      stack: error.stack,
+      name: error.name
+    });
   }
 }
