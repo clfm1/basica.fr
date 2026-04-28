@@ -8,7 +8,6 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import Stripe from "stripe";
 import nodemailer from "nodemailer";
-import serverless from "serverless-http";
 
 dotenv.config();
 
@@ -522,12 +521,15 @@ async function startServer() {
   return app;
 }
 
-const app = await startServer();
-
-if (!process.env.VERCEL) {
-  app.listen(3000, "0.0.0.0", () => {
-    console.log(`Server running on http://localhost:3000`);
+// Only listen if not running as a Netlify function
+if (!process.env.NETLIFY && process.env.NODE_ENV !== 'production') {
+  startServer().then((app) => {
+    const PORT = 3000;
+    app.listen(PORT, "0.0.0.0", () => {
+      console.log(`Server running on http://localhost:${PORT}`);
+    });
   });
 }
 
-export default serverless(app);
+// Export for Netlify Functions to use
+export default startServer;
