@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { getTursoClient, bcrypt, signToken, sendEmail, setCors } from "../_utils";
+import { getTursoClient, bcrypt, signToken, sendEmail, setCors, ensureSchema } from "../_utils";
 
 async function handleLogin(req: VercelRequest, res: VercelResponse) {
   const { email, password } = req.body;
@@ -8,6 +8,7 @@ async function handleLogin(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
+    await ensureSchema();
     const client = getTursoClient();
     const result = await client.execute({
       sql: "SELECT * FROM users WHERE email = ?",
@@ -38,6 +39,7 @@ async function handleRegister(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
+    await ensureSchema();
     const client = getTursoClient();
     const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -60,6 +62,7 @@ async function handleForgotPassword(req: VercelRequest, res: VercelResponse) {
   if (!email) return res.status(400).json({ error: "Email is required" });
 
   try {
+    await ensureSchema();
     const client = getTursoClient();
     const result = await client.execute({
       sql: "SELECT id FROM users WHERE email = ?",
@@ -99,6 +102,7 @@ async function handleResetPassword(req: VercelRequest, res: VercelResponse) {
   if (!token || !newPassword) return res.status(400).json({ error: "Token and new password are required" });
 
   try {
+    await ensureSchema();
     const client = getTursoClient();
     const result = await client.execute({
       sql: "SELECT id FROM users WHERE reset_token = ? AND reset_token_expiry > ?",

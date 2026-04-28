@@ -1,4 +1,4 @@
-import { createClient } from "@libsql/client/web";
+import { createClient } from "@libsql/client";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import Stripe from "stripe";
@@ -34,6 +34,70 @@ export function getTursoClient() {
   return tursoClient;
 }
 
+let schemaEnsured = false;
+
+export async function ensureSchema() {
+  if (schemaEnsured) return;
+
+  const client = getTursoClient();
+  await client.execute(`
+    CREATE TABLE IF NOT EXISTS users (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      email TEXT UNIQUE NOT NULL,
+      password TEXT NOT NULL,
+      reset_token TEXT,
+      reset_token_expiry DATETIME,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+  await client.execute(`
+    CREATE TABLE IF NOT EXISTS acquisitions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      product_id TEXT NOT NULL,
+      product_name TEXT NOT NULL,
+      preview_url TEXT NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users(id)
+    );
+  `);
+  await client.execute(`
+    CREATE TABLE IF NOT EXISTS licenses (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      product_id TEXT NOT NULL,
+      product_name TEXT NOT NULL,
+      license_key TEXT NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users(id)
+    );
+  `);
+  await client.execute(`
+    CREATE TABLE IF NOT EXISTS addresses (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      first_name TEXT,
+      last_name TEXT,
+      street TEXT,
+      city TEXT,
+      zip TEXT,
+      country TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users(id)
+    );
+  `);
+
+  try {
+    await client.execute("ALTER TABLE users ADD COLUMN reset_token TEXT");
+  } catch {}
+
+  try {
+    await client.execute("ALTER TABLE users ADD COLUMN reset_token_expiry DATETIME");
+  } catch {}
+
+  schemaEnsured = true;
+}
+
 // Stripe client (singleton)
 let stripe: Stripe | null = null;
 export function getStripe() {
@@ -47,26 +111,33 @@ export function getStripe() {
   return stripe;
 }
 
-// Email transporter
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || "authsmtp.amen.fr",
-  port: parseInt(process.env.SMTP_PORT || "465"),
-  secure: true,
-  tls: {
-    rejectUnauthorized: false,
-  },
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  },
-});
+// Email transporter (lazy-initialized to avoid module-load errors)
+let transporter: ReturnType<typeof nodemailer.createTransport> | null = null;
+
+function getTransporter() {
+  if (!transporter) {
+    transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST || "authsmtp.amen.fr",
+      port: parseInt(process.env.SMTP_PORT || "465"),
+      secure: true,
+      tls: {
+        rejectUnauthorized: false,
+      },
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      },
+    });
+  }
+  return transporter;
+}
 
 export async function sendEmail(to: string, subject: string, text: string, html: string) {
   if (!process.env.SMTP_HOST || !process.env.SMTP_USER) {
     console.log(`[EMAIL] Simulated email to ${to}: ${subject}`);
     return;
   }
-  await transporter.sendMail({
+  await getTransporter().sendMail({
     from: process.env.SMTP_FROM || '"My App" <no-reply@example.com>',
     to,
     subject,
