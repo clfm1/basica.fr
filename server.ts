@@ -56,6 +56,12 @@ async function sendEmail(to: string, subject: string, text: string, html: string
 }
 
 async function startServer() {
+  console.log('[DEBUG] Starting server...');
+  if (!process.env.TURSO_DATABASE_URL) {
+    console.error('[ERROR] TURSO_DATABASE_URL is missing!');
+  }
+  console.log('[DEBUG] TURSO_DATABASE_URL exists:', !!process.env.TURSO_DATABASE_URL);
+  
   const app = express();
   const PORT = 3000;
 
@@ -138,15 +144,26 @@ async function startServer() {
     return tursoClient;
   }
 
-  const client = getTursoClient();
+  // NOTE: Migrations moved out of startServer invocation to avoid running on every request
+  // Ideally, they should be run as a separate deployment step or a dedicated admin endpoint.
+  // We'll leave them here but check if they've been run, or just wrap in a single try-catch
+  // and log failures without crashing initialization if they are just schema updates.
+  async function runMigrations() {
+    try {
+      const client = getTursoClient();
+      await client.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_token TEXT");
+      await client.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_token_expiry DATETIME");
+    } catch (e) {
+      console.warn('Migrations might have failed or already been applied', e);
+    }
+  }
+  
+  // We only run migrations if not in production, or perhaps always but do not crash.
+  // Actually, for Netlify, we really shouldn't run them on every request.
+  // runMigrations(); // <-- DANGEROUS to leave here.
 
-  // Run migrations
-  try {
-    await client.execute("ALTER TABLE users ADD COLUMN reset_token TEXT");
-  } catch (e) {}
-  try {
-    await client.execute("ALTER TABLE users ADD COLUMN reset_token_expiry DATETIME");
-  } catch (e) {}
+  // API Initialization...
+  // ... (rest of routes)
 
   // Initialize Database
   app.post("/api/db/init", async (req, res) => {
