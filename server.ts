@@ -8,6 +8,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import Stripe from "stripe";
 import nodemailer from "nodemailer";
+import serverless from "serverless-http";
 
 dotenv.config();
 
@@ -518,9 +519,15 @@ async function startServer() {
     });
   }
 
-  app.listen(PORT, "0.0.0.0", () => {
-    console.log(`Server running on http://localhost:${PORT}`);
+  return app;
+}
+
+const app = await startServer();
+
+if (!process.env.VERCEL) {
+  app.listen(3000, "0.0.0.0", () => {
+    console.log(`Server running on http://localhost:3000`);
   });
 }
 
-startServer();
+export default serverless(app);
