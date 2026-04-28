@@ -52,6 +52,7 @@ async function sendEmail(to: string, subject: string, text: string, html: string
 
 async function startServer() {
   console.log('[DEBUG] Starting server...');
+  console.log('[DEBUG] process.cwd():', process.cwd());
   if (!process.env.TURSO_DATABASE_URL) {
     console.error('[ERROR] TURSO_DATABASE_URL is missing!');
   }
@@ -527,7 +528,9 @@ async function startServer() {
     });
     app.use(vite.middlewares);
   } else {
-    const distPath = path.join(process.cwd(), "dist");
+    // Assuming dist is in the root of the project, relative to where the server starts
+    const distPath = path.resolve("dist");
+    console.log('[DEBUG] Serving static files from:', distPath);
     app.use(express.static(distPath));
     app.get("*", (req, res) => {
       res.sendFile(path.join(distPath, "index.html"));
