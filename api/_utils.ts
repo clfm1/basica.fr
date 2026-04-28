@@ -146,6 +146,40 @@ export async function sendEmail(to: string, subject: string, text: string, html:
   });
 }
 
+export function getErrorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  if (typeof error === "string") return error;
+  return "Unknown error";
+}
+
+export function readJsonBody<T>(req: VercelRequest): Partial<T> {
+  const body = req.body;
+
+  if (!body) return {};
+
+  if (typeof body === "string") {
+    try {
+      return JSON.parse(body) as Partial<T>;
+    } catch {
+      return {};
+    }
+  }
+
+  if (Buffer.isBuffer(body)) {
+    try {
+      return JSON.parse(body.toString("utf8")) as Partial<T>;
+    } catch {
+      return {};
+    }
+  }
+
+  if (typeof body === "object") {
+    return body as Partial<T>;
+  }
+
+  return {};
+}
+
 // JWT Authentication helper
 export function authenticateToken(req: VercelRequest): { userId: number; email: string } | null {
   const authHeader = req.headers['authorization'];

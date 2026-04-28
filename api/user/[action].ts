@@ -1,7 +1,22 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { getTursoClient, authenticateToken, bcrypt, setCors } from "../_utils";
+import { getTursoClient, authenticateToken, bcrypt, setCors, ensureSchema, readJsonBody, getErrorMessage } from "../_utils";
+
+type AddressBody = {
+  first_name: string;
+  last_name: string;
+  street: string;
+  city: string;
+  zip: string;
+  country: string;
+};
+
+type ChangePasswordBody = {
+  currentPassword: string;
+  newPassword: string;
+};
 
 async function handleStats(req: VercelRequest, res: VercelResponse, userId: number) {
+  await ensureSchema();
   const client = getTursoClient();
   const result = await client.execute({
     sql: "SELECT COUNT(*) as count FROM acquisitions WHERE user_id = ?",
@@ -12,6 +27,7 @@ async function handleStats(req: VercelRequest, res: VercelResponse, userId: numb
 }
 
 async function handleOrders(req: VercelRequest, res: VercelResponse, userId: number) {
+  await ensureSchema();
   const client = getTursoClient();
   const result = await client.execute({
     sql: "SELECT * FROM acquisitions WHERE user_id = ? ORDER BY created_at DESC",
@@ -21,6 +37,7 @@ async function handleOrders(req: VercelRequest, res: VercelResponse, userId: num
 }
 
 async function handleLicenses(req: VercelRequest, res: VercelResponse, userId: number) {
+  await ensureSchema();
   const client = getTursoClient();
   const result = await client.execute({
     sql: "SELECT * FROM licenses WHERE user_id = ? ORDER BY created_at DESC",
@@ -30,6 +47,7 @@ async function handleLicenses(req: VercelRequest, res: VercelResponse, userId: n
 }
 
 async function handleAddresses(req: VercelRequest, res: VercelResponse, userId: number) {
+  await ensureSchema();
   const client = getTursoClient();
 
   if (req.method === "GET") {
@@ -41,7 +59,7 @@ async function handleAddresses(req: VercelRequest, res: VercelResponse, userId: 
   }
 
   if (req.method === "POST") {
-    const { first_name, last_name, street, city, zip, country } = req.body;
+    const { first_name, last_name, street, city, zip, country } = readJsonBody<AddressBody>(req);
     await client.execute({
       sql: "INSERT INTO addresses (user_id, first_name, last_name, street, city, zip, country) VALUES (?, ?, ?, ?, ?, ?, ?)",
       args: [userId, first_name, last_name, street, city, zip, country]
@@ -55,11 +73,12 @@ async function handleAddresses(req: VercelRequest, res: VercelResponse, userId: 
 async function handleChangePassword(req: VercelRequest, res: VercelResponse, userId: number) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
-  const { currentPassword, newPassword } = req.body;
+  const { currentPassword, newPassword } = readJsonBody<ChangePasswordBody>(req);
   if (!currentPassword || !newPassword) {
     return res.status(400).json({ error: "Current and new passwords are required" });
   }
 
+  await ensureSchema();
   const client = getTursoClient();
   const result = await client.execute({
     sql: "SELECT password FROM users WHERE id = ?",
@@ -109,7 +128,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       default:
         return res.status(404).json({ error: "Not found" });
     }
-  } catch (error: any) {
-    res.status(500).json({ error: error.message });
+  } catch (error: unknown) {
+    const message = getErrorMessage(error);
+    console.error("[USER] Handler failed:", message, error);
+    res.status(500).json({ error: message });
   }
 }

@@ -1,8 +1,12 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { getTursoClient, bcrypt, signToken, sendEmail, setCors, ensureSchema } from "../_utils";
+import { getTursoClient, bcrypt, signToken, sendEmail, setCors, ensureSchema, readJsonBody, getErrorMessage } from "../_utils";
+
+type LoginBody = { email: string; password: string };
+type ForgotPasswordBody = { email: string };
+type ResetPasswordBody = { token: string; newPassword: string };
 
 async function handleLogin(req: VercelRequest, res: VercelResponse) {
-  const { email, password } = req.body;
+  const { email, password } = readJsonBody<LoginBody>(req);
   if (!email || !password) {
     return res.status(400).json({ error: "Email and password are required" });
   }
@@ -27,13 +31,15 @@ async function handleLogin(req: VercelRequest, res: VercelResponse) {
 
     const token = signToken({ userId: user.id, email: user.email });
     res.json({ token, user: { id: user.id, email: user.email } });
-  } catch (error: any) {
-    res.status(500).json({ error: error.message });
+  } catch (error: unknown) {
+    const message = getErrorMessage(error);
+    console.error("[AUTH] Login failed:", message, error);
+    res.status(500).json({ error: message });
   }
 }
 
 async function handleRegister(req: VercelRequest, res: VercelResponse) {
-  const { email, password } = req.body;
+  const { email, password } = readJsonBody<LoginBody>(req);
   if (!email || !password) {
     return res.status(400).json({ error: "Email and password are required" });
   }
@@ -49,16 +55,18 @@ async function handleRegister(req: VercelRequest, res: VercelResponse) {
     });
 
     res.status(201).json({ message: "User registered successfully" });
-  } catch (error: any) {
-    if (error.message.includes("UNIQUE constraint failed")) {
+  } catch (error: unknown) {
+    const message = getErrorMessage(error);
+    console.error("[AUTH] Register failed:", message, error);
+    if (message.includes("UNIQUE constraint failed")) {
       return res.status(400).json({ error: "Email already exists" });
     }
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: message });
   }
 }
 
 async function handleForgotPassword(req: VercelRequest, res: VercelResponse) {
-  const { email } = req.body;
+  const { email } = readJsonBody<ForgotPasswordBody>(req);
   if (!email) return res.status(400).json({ error: "Email is required" });
 
   try {
@@ -92,13 +100,15 @@ async function handleForgotPassword(req: VercelRequest, res: VercelResponse) {
     );
 
     res.json({ message: "Un email a été envoyé avec les instructions pour réinitialiser votre mot de passe." });
-  } catch (error: any) {
-    res.status(500).json({ error: error.message });
+  } catch (error: unknown) {
+    const message = getErrorMessage(error);
+    console.error("[AUTH] Forgot password failed:", message, error);
+    res.status(500).json({ error: message });
   }
 }
 
 async function handleResetPassword(req: VercelRequest, res: VercelResponse) {
-  const { token, newPassword } = req.body;
+  const { token, newPassword } = readJsonBody<ResetPasswordBody>(req);
   if (!token || !newPassword) return res.status(400).json({ error: "Token and new password are required" });
 
   try {
@@ -122,8 +132,10 @@ async function handleResetPassword(req: VercelRequest, res: VercelResponse) {
     });
 
     res.json({ message: "Votre mot de passe a été réinitialisé avec succès !" });
-  } catch (error: any) {
-    res.status(500).json({ error: error.message });
+  } catch (error: unknown) {
+    const message = getErrorMessage(error);
+    console.error("[AUTH] Reset password failed:", message, error);
+    res.status(500).json({ error: message });
   }
 }
 
@@ -137,6 +149,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const { action } = req.query;
     console.log(`[AUTH] Action resolved: ${action}`);
+    console.log("[AUTH] Request metadata:", {
+      contentType: req.headers["content-type"],
+      hasBody: Boolean(req.body),
+      bodyType: typeof req.body,
+    });
 
     switch (action) {
       case "login":
@@ -155,13 +172,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         console.log(`[AUTH] Action not found: ${action}`);
         return res.status(404).json({ error: "Not found" });
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = getErrorMessage(error);
     console.error(`[AUTH] FATAL ERROR IN HANDLER:`, error);
     return res.status(500).json({ 
       error: "Internal Server Error", 
-      message: error.message, 
-      stack: error.stack,
-      name: error.name
+      message,
     });
   }
 }
