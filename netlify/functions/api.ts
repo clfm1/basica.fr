@@ -1,11 +1,25 @@
 import serverless from 'serverless-http';
 import startServer from '../../server';
 
-// We need an async handler because startServer is async
-// This will initialize the app on every function call (might need memoization,
-// but let's start with this to ensure compatibility).
+let cachedApp: any = null;
+
+async function getApp() {
+  if (!cachedApp) {
+    cachedApp = await startServer();
+  }
+  return cachedApp;
+}
+
 export const handler = async (event: any, context: any) => {
-  const app = await startServer();
-  const wrapper = serverless(app);
-  return wrapper(event, context);
+  try {
+    const app = await getApp();
+    const wrapper = serverless(app);
+    return wrapper(event, context);
+  } catch (error) {
+    console.error('[FUNCTION ERROR] Initialization failed:', error);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: 'Internal Server Error during initialization', details: error instanceof Error ? error.message : String(error) }),
+    };
+  }
 };
