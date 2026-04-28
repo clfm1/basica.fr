@@ -1,6 +1,5 @@
 import express from "express";
 import path from "path";
-import { fileURLToPath } from "url";
 import { createClient } from "@libsql/client/http";
 import dotenv from "dotenv";
 import bcrypt from "bcryptjs";
@@ -9,9 +8,6 @@ import Stripe from "stripe";
 import nodemailer from "nodemailer";
 
 dotenv.config();
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 const JWT_SECRET = process.env.JWT_SECRET || "basico-secret-key-123";
 
