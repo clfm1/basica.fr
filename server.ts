@@ -214,19 +214,22 @@ async function startServer() {
 
     try {
       const client = getTursoClient();
+      console.log(`[AUTH] Registering user: ${email}`);
       const hashedPassword = await bcrypt.hash(password, 10);
       
       await client.execute({
         sql: "INSERT INTO users (email, password) VALUES (?, ?)",
         args: [email, hashedPassword]
       });
+      console.log(`[AUTH] User registered successfully: ${email}`);
 
       res.status(201).json({ message: "User registered successfully" });
     } catch (error: any) {
-      if (error.message.includes("UNIQUE constraint failed")) {
+      console.error(`[AUTH] Registration error for ${email}:`, error);
+      if (error.message && error.message.includes("UNIQUE constraint failed")) {
         return res.status(400).json({ error: "Email already exists" });
       }
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: `Registration error: ${error.message}` });
     }
   });
 
