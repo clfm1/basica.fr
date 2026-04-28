@@ -59,6 +59,12 @@ async function startServer() {
   const app = express();
   const PORT = 3000;
 
+  app.use(express.json());
+
+  app.get("/api/test", (req, res) => {
+    res.json({ message: "Test successful" });
+  });
+
   // Stripe Webhook needs raw body - MUST be before any other body parser
   app.post("/api/webhooks/stripe", express.raw({ type: 'application/json' }), async (req, res) => {
     const sig = req.headers['stripe-signature'] as string;
@@ -114,8 +120,6 @@ async function startServer() {
 
     res.json({ received: true });
   });
-
-  app.use(express.json());
 
   // Turso client lazy initialization
   let tursoClient: any = null;
@@ -299,6 +303,7 @@ async function startServer() {
   });
 
   app.post("/api/auth/login", async (req, res) => {
+    console.log("Login API hit");
     const { email, password } = req.body;
     if (!email || !password) {
       return res.status(400).json({ error: "Email and password are required" });
