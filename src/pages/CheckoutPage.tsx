@@ -5,6 +5,16 @@ import { PRODUCTS } from '../constants';
 import { motion } from 'motion/react';
 import { ShieldCheck, Lock, CreditCard, Apple, Globe, ArrowLeft, Check, Ticket, Info } from 'lucide-react';
 
+async function readApiJson(response: Response) {
+  const responseText = await response.text();
+  try {
+    return responseText ? JSON.parse(responseText) : {};
+  } catch {
+    console.error('API response is not valid JSON:', responseText);
+    throw new Error('Erreur serveur temporaire. Veuillez réessayer dans quelques instants.');
+  }
+}
+
 export default function CheckoutPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -39,7 +49,7 @@ export default function CheckoutPage() {
         })
       });
 
-      const data = await response.json();
+      const data = await readApiJson(response);
       if (response.ok && data.url) {
         // Redirect directly to Stripe Checkout URL
         window.location.href = data.url;

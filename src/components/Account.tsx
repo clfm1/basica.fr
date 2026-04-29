@@ -9,6 +9,16 @@ import {
 
 type TabType = 'dashboard' | 'orders' | 'licenses' | 'addresses' | 'settings';
 
+async function readApiJson(res: Response) {
+  const responseText = await res.text();
+  try {
+    return responseText ? JSON.parse(responseText) : {};
+  } catch {
+    console.error('API response is not valid JSON:', responseText);
+    throw new Error('Erreur serveur temporaire. Veuillez réessayer dans quelques instants.');
+  }
+}
+
 export default function Account() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -60,7 +70,7 @@ export default function Account() {
         body: JSON.stringify({ email })
       });
 
-      const data = await res.json();
+      const data = await readApiJson(res);
       if (!res.ok) throw new Error(data.error);
 
       setMessage({ type: 'success', text: data.message });
@@ -89,7 +99,7 @@ export default function Account() {
         body: JSON.stringify({ token: resetToken, newPassword })
       });
 
-      const data = await res.json();
+      const data = await readApiJson(res);
       if (!res.ok) throw new Error(data.error);
 
       setMessage({ type: 'success', text: data.message });
@@ -131,14 +141,7 @@ export default function Account() {
         body: JSON.stringify({ email, password })
       });
 
-      const responseText = await res.text();
-      let data;
-      try {
-        data = JSON.parse(responseText);
-      } catch (e) {
-        console.error('Login response is not valid JSON:', responseText);
-        throw new Error('Erreur serveur : format de réponse invalide');
-      }
+      const data = await readApiJson(res);
 
       if (!res.ok) {
         throw new Error(data.error || 'Erreur lors de la connexion');
@@ -168,7 +171,7 @@ export default function Account() {
         body: JSON.stringify({ email, password })
       });
 
-      const data = await res.json();
+      const data = await readApiJson(res);
 
       if (!res.ok) {
         throw new Error(data.error || 'Erreur lors de l\'inscription');
@@ -216,7 +219,7 @@ export default function Account() {
         body: JSON.stringify({ currentPassword, newPassword })
       });
 
-      const data = await res.json();
+      const data = await readApiJson(res);
 
       if (!res.ok) {
         throw new Error(data.error || 'Erreur lors du changement de mot de passe');
