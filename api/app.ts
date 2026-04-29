@@ -1,5 +1,4 @@
 import express from "express";
-import serverless from "serverless-http";
 import { createClient } from "@libsql/client/web";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
@@ -157,10 +156,6 @@ const authenticateToken = (req: any, res: any, next: any) => {
 };
 
 // ── Express app ─────────────────────────────────────────────────────────────
-// IMPORTANT: Netlify redirects /api/* → /.netlify/functions/api/:splat
-// serverless-http with basePath strips /.netlify/functions/api from the path
-// So Express receives just the remainder, e.g. /auth/login, /test, /health
-// Therefore ALL routes below must NOT have /api prefix
 const app = express();
 app.use(
   express.json({
@@ -558,14 +553,6 @@ app.post("/webhooks/stripe", async (req: any, res) => {
 app.use((req, res) => {
   console.log(`[404] Unmatched route: ${req.method} ${req.url}`);
   res.status(404).json({ error: "Route not found", method: req.method, path: req.url });
-});
-
-// ── Export handler ───────────────────────────────────────────────────────────
-// Netlify redirect: /api/* → /.netlify/functions/api/:splat
-// e.g. /api/auth/login → /.netlify/functions/api/auth/login
-// serverless-http strips basePath, so Express sees /auth/login
-export const handler = serverless(app, {
-  basePath: "/.netlify/functions/api",
 });
 
 export default app;

@@ -159,7 +159,6 @@ async function startServer() {
   }
   
   // We only run migrations if not in production, or perhaps always but do not crash.
-  // Actually, for Netlify, we really shouldn't run them on every request.
   // runMigrations(); // <-- DANGEROUS to leave here.
 
   // API Initialization...
@@ -541,8 +540,8 @@ async function startServer() {
   return app;
 }
 
-// Only listen if not running as a Netlify function
-if (!process.env.NETLIFY && process.env.NODE_ENV !== 'production') {
+// Only listen during local development.
+if (process.env.NODE_ENV !== 'production') {
   startServer().then((app) => {
     const PORT = 3000;
     app.listen(PORT, "0.0.0.0", () => {
@@ -551,5 +550,5 @@ if (!process.env.NETLIFY && process.env.NODE_ENV !== 'production') {
   });
 }
 
-// Export for Netlify Functions to use
+// Export for local tooling.
 export default startServer;
