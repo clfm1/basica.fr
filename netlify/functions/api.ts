@@ -1,6 +1,6 @@
 import express from "express";
 import serverless from "serverless-http";
-import { createClient } from "@libsql/client";
+import { createClient } from "@libsql/client/web";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import Stripe from "stripe";
