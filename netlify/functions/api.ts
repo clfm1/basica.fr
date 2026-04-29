@@ -567,3 +567,5 @@ app.use((req, res) => {
 export const handler = serverless(app, {
   basePath: "/.netlify/functions/api",
 });
+
+export default app;

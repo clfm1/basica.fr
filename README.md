@@ -1,20 +1,70 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# Basica.fr
 
-# Run and deploy your AI Studio app
+Site React/Vite avec API serverless pour Vercel.
 
-This contains everything you need to run your app locally.
+## Deploiement Vercel
 
-View your app in AI Studio: https://ai.studio/apps/532f9174-9a44-4a5d-9ec0-865c87cc0f77
+1. Importer le depot GitHub dans Vercel.
+2. Framework preset : `Vite`.
+3. Build command : `npm run build`.
+4. Output directory : `dist`.
+5. Ajouter les variables d'environnement ci-dessous dans Vercel.
+6. Deployer.
 
-## Run Locally
+## Variables Vercel
 
-**Prerequisites:**  Node.js
+Obligatoires pour la connexion, Turso et Stripe :
 
+```txt
+TURSO_DATABASE_URL=
+TURSO_AUTH_TOKEN=
+STRIPE_SECRET_KEY=
+STRIPE_WEBHOOK_SECRET=
+JWT_SECRET=
+```
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+Emails via Resend :
+
+```txt
+RESEND_API_KEY=
+RESEND_FROM=
+```
+
+Alternative SMTP :
+
+```txt
+SMTP_HOST=
+SMTP_PORT=
+SMTP_USER=
+SMTP_PASS=
+SMTP_FROM=
+```
+
+Optionnel cote client :
+
+```txt
+VITE_STRIPE_PUBLIC_KEY=
+```
+
+## Tests apres deploiement
+
+Remplacer `https://ton-domaine.vercel.app` par l'URL Vercel :
+
+```txt
+https://ton-domaine.vercel.app/api/test
+https://ton-domaine.vercel.app/api/debug-env
+https://ton-domaine.vercel.app/api/db-status
+```
+
+Stripe webhook :
+
+```txt
+https://ton-domaine.vercel.app/api/webhooks/stripe
+```
+
+## Local
+
+```bash
+npm install
+npm run dev
+```
