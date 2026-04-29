@@ -1,6 +1,8 @@
 import express from "express";
+import { createServer as createViteServer } from "vite";
 import path from "path";
-import { createClient } from "@libsql/client/http";
+import { fileURLToPath } from "url";
+import { createClient } from "@libsql/client";
 import dotenv from "dotenv";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
@@ -8,6 +10,9 @@ import Stripe from "stripe";
 import nodemailer from "nodemailer";
 
 dotenv.config();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const JWT_SECRET = process.env.JWT_SECRET || "basico-secret-key-123";
 
@@ -52,7 +57,6 @@ async function sendEmail(to: string, subject: string, text: string, html: string
 
 async function startServer() {
   console.log('[DEBUG] Starting server...');
-  console.log('[DEBUG] process.cwd():', process.cwd());
   if (!process.env.TURSO_DATABASE_URL) {
     console.error('[ERROR] TURSO_DATABASE_URL is missing!');
   }
@@ -521,16 +525,13 @@ async function startServer() {
 
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {
-    const { createServer } = await import("vite");
-    const vite = await createServer({
+    const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "spa",
     });
     app.use(vite.middlewares);
   } else {
-    // Assuming dist is in the root of the project, relative to where the server starts
-    const distPath = path.resolve("dist");
-    console.log('[DEBUG] Serving static files from:', distPath);
+    const distPath = path.join(process.cwd(), "dist");
     app.use(express.static(distPath));
     app.get("*", (req, res) => {
       res.sendFile(path.join(distPath, "index.html"));
