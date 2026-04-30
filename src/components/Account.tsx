@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 
 type TabType = 'dashboard' | 'orders' | 'licenses' | 'addresses' | 'settings';
+const ADMIN_EMAIL = 'calofadam16@gmail.com';
 
 async function readApiJson(res: Response) {
   const responseText = await res.text();
@@ -40,11 +41,34 @@ export default function Account() {
   const [orders, setOrders] = useState<any[]>([]);
   const [licenses, setLicenses] = useState<any[]>([]);
   const [addresses, setAddresses] = useState<any[]>([]);
+  const [adminCustomers, setAdminCustomers] = useState<any[]>([]);
+  const [selectedCustomer, setSelectedCustomer] = useState<any | null>(null);
+  const [selectedCustomerOrders, setSelectedCustomerOrders] = useState<any[]>([]);
+  const [adminLoading, setAdminLoading] = useState(false);
+  const [adminMessage, setAdminMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+  const [mailSubject, setMailSubject] = useState('');
+  const [mailBody, setMailBody] = useState('');
+
+  const confirmCheckoutSession = async (sessionId: string, token: string) => {
+    const res = await fetch('/api/confirm-checkout-session', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ sessionId })
+    });
+
+    const data = await readApiJson(res);
+    if (!res.ok) throw new Error(data.error || 'Impossible de confirmer la commande');
+    return data;
+  };
 
   useEffect(() => {
     // Check for reset token in URL
     const params = new URLSearchParams(window.location.search);
     const token = params.get('token');
+    const sessionId = params.get('session_id');
     if (token) {
       setResetToken(token);
       setAuthView('reset');
@@ -54,9 +78,30 @@ export default function Account() {
     const savedToken = localStorage.getItem('token');
     if (savedUser && savedToken) {
       setUser(JSON.parse(savedUser));
-      fetchData(savedToken);
+      if (sessionId) {
+        confirmCheckoutSession(sessionId, savedToken)
+          .then(() => {
+            setMessage({ type: 'success', text: 'Paiement confirmé ! Votre commande est disponible dans votre compte et un email de confirmation a été envoyé.' });
+          })
+          .catch((err: any) => {
+            setMessage({ type: 'error', text: err.message });
+          })
+          .finally(() => {
+            fetchData(savedToken);
+            const cleanUrl = `${window.location.pathname}`;
+            window.history.replaceState({}, '', cleanUrl);
+          });
+      } else {
+        fetchData(savedToken);
+      }
     }
   }, []);
+
+  useEffect(() => {
+    if (user?.email.toLowerCase() === ADMIN_EMAIL && activeTab === 'settings') {
+      fetchAdminCustomers();
+    }
+  }, [user, activeTab]);
 
   const handleForgotPassword = async (e: FormEvent) => {
     e.preventDefault();
@@ -126,6 +171,78 @@ export default function Account() {
       if (addressesRes.ok) setAddresses(await addressesRes.json());
     } catch (err) {
       console.error("Failed to fetch account data", err);
+    }
+  };
+
+  const fetchAdminCustomers = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    setAdminLoading(true);
+    setAdminMessage(null);
+
+    try {
+      const res = await fetch('/api/admin/customers', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await readApiJson(res);
+      if (!res.ok) throw new Error(data.error || 'Impossible de charger les clients');
+      setAdminCustomers(data);
+    } catch (err: any) {
+      setAdminMessage({ type: 'error', text: err.message });
+    } finally {
+      setAdminLoading(false);
+    }
+  };
+
+  const openCustomer = async (customer: any) => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    setSelectedCustomer(customer);
+    setSelectedCustomerOrders([]);
+    setAdminMessage(null);
+
+    try {
+      const res = await fetch(`/api/admin/customers/${customer.id}/orders`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await readApiJson(res);
+      if (!res.ok) throw new Error(data.error || 'Impossible de charger les commandes');
+      setSelectedCustomerOrders(data);
+    } catch (err: any) {
+      setAdminMessage({ type: 'error', text: err.message });
+    }
+  };
+
+  const sendAdminEmail = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!selectedCustomer) return;
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    setAdminLoading(true);
+    setAdminMessage(null);
+
+    try {
+      const res = await fetch('/api/admin/send-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          to: selectedCustomer.email,
+          subject: mailSubject,
+          message: mailBody
+        })
+      });
+      const data = await readApiJson(res);
+      if (!res.ok) throw new Error(data.error || 'Impossible d’envoyer l’email');
+      setAdminMessage({ type: 'success', text: 'Email envoyé au client.' });
+      setMailSubject('');
+      setMailBody('');
+    } catch (err: any) {
+      setAdminMessage({ type: 'error', text: err.message });
+    } finally {
+      setAdminLoading(false);
     }
   };
 
@@ -237,6 +354,7 @@ export default function Account() {
   };
 
   if (user) {
+    const isAdmin = user.email.toLowerCase() === ADMIN_EMAIL;
     const navItems = [
       { id: 'dashboard', label: 'Tableau de bord', icon: LayoutDashboard },
       { id: 'orders', label: 'Commandes', icon: ShoppingBag },
@@ -387,14 +505,17 @@ export default function Account() {
                           <tbody className="divide-y divide-white/5">
                             {orders.map((order, i) => (
                               <tr key={i} className="group hover:bg-white/[0.02]">
-                                <td className="py-5 font-bold text-white">#{order.id.toString().slice(0, 6)}</td>
+                                <td className="py-5 pr-4">
+                                  <div className="font-bold text-white">{order.product_name}</div>
+                                  <div className="text-[10px] font-black uppercase tracking-widest text-zinc-600">Commande #{order.id.toString().slice(0, 6)}</div>
+                                </td>
                                 <td className="py-5 text-center text-zinc-400 text-sm whitespace-nowrap">{new Date(order.created_at).toLocaleDateString()}</td>
                                 <td className="py-5 text-center">
                                   <span className="text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-500">
                                     Complété
                                   </span>
                                 </td>
-                                <td className="py-5 text-right font-black text-white">Liaison</td>
+                                <td className="py-5 text-right font-black text-white">Payé</td>
                                 <td className="py-5 text-right">
                                   <button className="text-[10px] font-black uppercase tracking-widest text-zinc-400 hover:text-white transition-colors">
                                     Voir Détails
@@ -575,6 +696,119 @@ export default function Account() {
                           {passwordLoading ? <Loader2 className="animate-spin" size={18} /> : 'Enregistrer les modifications'}
                         </button>
                       </form>
+
+                      {isAdmin && (
+                        <div className="mt-10 pt-10 border-t border-white/5">
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                            <div>
+                              <h3 className="text-xl font-black uppercase tracking-tight">Clients</h3>
+                              <p className="text-xs text-zinc-500 mt-1">Clients ayant passé au moins une commande.</p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={fetchAdminCustomers}
+                              disabled={adminLoading}
+                              className="px-4 py-2 rounded-xl border border-white/10 text-[10px] font-black uppercase tracking-widest text-zinc-300 hover:text-white hover:border-orange-500/40 disabled:opacity-50"
+                            >
+                              {adminLoading ? 'Chargement...' : 'Actualiser'}
+                            </button>
+                          </div>
+
+                          {adminMessage && (
+                            <div className={`mb-6 p-4 rounded-xl flex items-center gap-3 border ${
+                              adminMessage.type === 'success' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-rose-500/10 border-rose-500/20 text-rose-400'
+                            }`}>
+                              {adminMessage.type === 'success' ? <CheckCircle2 size={18} /> : <AlertCircle size={18} />}
+                              <span className="text-xs font-bold">{adminMessage.text}</span>
+                            </div>
+                          )}
+
+                          <div className="grid lg:grid-cols-[320px_1fr] gap-6">
+                            <div className="rounded-2xl border border-white/5 bg-black/30 overflow-hidden">
+                              {adminCustomers.length > 0 ? (
+                                adminCustomers.map((customer) => (
+                                  <button
+                                    type="button"
+                                    key={customer.id}
+                                    onClick={() => openCustomer(customer)}
+                                    className={`w-full text-left p-4 border-b border-white/5 transition-colors ${
+                                      selectedCustomer?.id === customer.id ? 'bg-orange-600/15' : 'hover:bg-white/[0.03]'
+                                    }`}
+                                  >
+                                    <div className="font-bold text-white text-sm truncate">{customer.email}</div>
+                                    <div className="mt-1 text-[10px] font-black uppercase tracking-widest text-zinc-500">
+                                      {customer.order_count} commande{Number(customer.order_count) > 1 ? 's' : ''}
+                                    </div>
+                                  </button>
+                                ))
+                              ) : (
+                                <div className="p-6 text-sm text-zinc-500">Aucun client avec commande pour le moment.</div>
+                              )}
+                            </div>
+
+                            <div className="rounded-2xl border border-white/5 bg-black/30 p-5 min-h-[320px]">
+                              {selectedCustomer ? (
+                                <div className="space-y-6">
+                                  <div>
+                                    <div className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Client sélectionné</div>
+                                    <div className="mt-1 font-black text-white">{selectedCustomer.email}</div>
+                                  </div>
+
+                                  <div>
+                                    <h4 className="text-sm font-black uppercase tracking-widest text-white mb-3">Commandes</h4>
+                                    <div className="space-y-2">
+                                      {selectedCustomerOrders.map((order) => (
+                                        <div key={order.id} className="rounded-xl border border-white/5 bg-zinc-950/70 p-3">
+                                          <div className="flex items-center justify-between gap-3">
+                                            <div>
+                                              <div className="text-sm font-bold text-white">{order.product_name}</div>
+                                              <div className="text-[10px] text-zinc-500">Commande #{order.id}</div>
+                                            </div>
+                                            <div className="text-[10px] font-black uppercase tracking-widest text-emerald-500">
+                                              {new Date(order.created_at).toLocaleDateString('fr-FR')}
+                                            </div>
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+
+                                  <form onSubmit={sendAdminEmail} className="space-y-3 pt-4 border-t border-white/5">
+                                    <h4 className="text-sm font-black uppercase tracking-widest text-white">Envoyer un email</h4>
+                                    <input
+                                      required
+                                      value={mailSubject}
+                                      onChange={(e) => setMailSubject(e.target.value)}
+                                      placeholder="Sujet"
+                                      className="w-full h-12 bg-black/50 border border-white/5 rounded-xl px-4 text-white focus:outline-none focus:border-orange-500/50 transition-all"
+                                    />
+                                    <textarea
+                                      required
+                                      value={mailBody}
+                                      onChange={(e) => setMailBody(e.target.value)}
+                                      placeholder="Message au client"
+                                      rows={5}
+                                      className="w-full bg-black/50 border border-white/5 rounded-xl p-4 text-white focus:outline-none focus:border-orange-500/50 transition-all resize-none"
+                                    />
+                                    <button
+                                      type="submit"
+                                      disabled={adminLoading}
+                                      className="px-6 py-3 bg-orange-600 hover:bg-orange-500 disabled:opacity-50 text-white font-black uppercase tracking-widest rounded-xl transition-all flex items-center gap-2"
+                                    >
+                                      <Mail size={16} />
+                                      Envoyer depuis le site
+                                    </button>
+                                  </form>
+                                </div>
+                              ) : (
+                                <div className="h-full min-h-[280px] flex items-center justify-center text-center text-zinc-500 text-sm">
+                                  Sélectionne un client pour voir ses commandes et lui envoyer un email.
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
 

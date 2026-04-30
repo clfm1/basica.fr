@@ -8,6 +8,7 @@ import { Resend } from "resend";
 
 // ── Environment ──────────────────────────────────────────────────────────────
 const JWT_SECRET = process.env.JWT_SECRET || "basico-secret-key-123";
+const ADMIN_EMAIL = "calofadam16@gmail.com";
 let databaseReady: Promise<void> | null = null;
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
@@ -95,10 +96,12 @@ async function ensureDatabase() {
           product_id TEXT NOT NULL,
           product_name TEXT NOT NULL,
           preview_url TEXT NOT NULL,
+          stripe_session_id TEXT,
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
           FOREIGN KEY (user_id) REFERENCES users(id)
         );
       `);
+      await addColumnIfMissing("ALTER TABLE acquisitions ADD COLUMN stripe_session_id TEXT");
       await client.execute(`
         CREATE TABLE IF NOT EXISTS licenses (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -106,10 +109,12 @@ async function ensureDatabase() {
           product_id TEXT NOT NULL,
           product_name TEXT NOT NULL,
           license_key TEXT NOT NULL,
+          stripe_session_id TEXT,
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
           FOREIGN KEY (user_id) REFERENCES users(id)
         );
       `);
+      await addColumnIfMissing("ALTER TABLE licenses ADD COLUMN stripe_session_id TEXT");
       await client.execute(`
         CREATE TABLE IF NOT EXISTS addresses (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -174,6 +179,95 @@ async function sendEmail(to: string, subject: string, text: string, html: string
   });
 }
 
+function formatEuroFromSession(session: Stripe.Checkout.Session) {
+  const amount = session.amount_total;
+  if (typeof amount !== "number") return "";
+  return new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(amount / 100);
+}
+
+async function sendOrderConfirmationEmail(to: string, productName: string, session: Stripe.Checkout.Session) {
+  const price = formatEuroFromSession(session);
+  const accountUrl = `${session.success_url || ""}`.split("?")[0] || "https://basica.fr/my-account";
+  const subject = "Commande confirmée - Basico";
+  const text = [
+    "Félicitations, votre commande est bien passée.",
+    "",
+    `Produit : ${productName}`,
+    price ? `Montant : ${price}` : "",
+    "",
+    "Votre produit est en cours de préparation et arrive bientôt dans votre espace client.",
+    `Suivi de commande : ${accountUrl}`,
+  ].filter(Boolean).join("\n");
+
+  const html = `
+    <div style="font-family:Arial,sans-serif;background:#080307;color:#ffffff;padding:28px;border-radius:18px">
+      <h1 style="margin:0 0 12px;color:#f97316">Félicitations !</h1>
+      <p style="margin:0 0 18px;color:#d4d4d8">Votre commande est bien passée.</p>
+      <div style="background:#120c0d;border:1px solid #2a1710;border-radius:14px;padding:18px;margin:18px 0">
+        <p style="margin:0 0 8px;color:#a1a1aa">Produit</p>
+        <p style="margin:0;font-size:18px;font-weight:700">${productName}</p>
+        ${price ? `<p style="margin:12px 0 0;color:#f97316;font-weight:700">${price}</p>` : ""}
+      </div>
+      <p style="color:#d4d4d8">Votre produit est en cours de préparation et arrive bientôt dans votre espace client.</p>
+      <a href="${accountUrl}" style="display:inline-block;margin-top:14px;background:#ea580c;color:#fff;text-decoration:none;padding:12px 18px;border-radius:999px;font-weight:700">Voir mon compte</a>
+    </div>
+  `;
+
+  await sendEmail(to, subject, text, html);
+}
+
+async function fulfillCheckoutSession(session: Stripe.Checkout.Session, requestId: string) {
+  if (session.payment_status !== "paid") {
+    return { fulfilled: false, reason: "Session is not paid" };
+  }
+
+  const productId = session.metadata?.productId;
+  const productName = session.metadata?.productName;
+  const userEmail = session.customer_email || session.customer_details?.email;
+
+  if (!productId || !productName || !userEmail) {
+    return { fulfilled: false, reason: "Missing product or customer metadata" };
+  }
+
+  await ensureDatabase();
+  const client = getTursoClient();
+  const existing = await client.execute({
+    sql: "SELECT id FROM acquisitions WHERE stripe_session_id = ? LIMIT 1",
+    args: [session.id],
+  });
+
+  if (existing.rows.length > 0) {
+    return { fulfilled: true, alreadyFulfilled: true };
+  }
+
+  const userResult = await client.execute({
+    sql: "SELECT id FROM users WHERE email = ?",
+    args: [userEmail],
+  });
+  const userId = userResult.rows[0]?.id;
+
+  if (userId) {
+    await client.execute({
+      sql: "INSERT INTO acquisitions (user_id, product_id, product_name, preview_url, stripe_session_id) VALUES (?, ?, ?, ?, ?)",
+      args: [userId, productId, productName, "Commande confirmée", session.id],
+    });
+
+    const licenseKey = `CMD-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
+    await client.execute({
+      sql: "INSERT INTO licenses (user_id, product_id, product_name, license_key, stripe_session_id) VALUES (?, ?, ?, ?, ?)",
+      args: [userId, productId, productName, licenseKey, session.id],
+    });
+  }
+
+  try {
+    await sendOrderConfirmationEmail(userEmail, productName, session);
+  } catch (error) {
+    logError(requestId, "Order confirmation email failed", error, { userEmail, sessionId: session.id });
+  }
+
+  return { fulfilled: true, hasAccount: !!userId };
+}
+
 // ── Auth middleware ──────────────────────────────────────────────────────────
 const authenticateToken = (req: any, res: any, next: any) => {
   const authHeader = req.headers["authorization"];
@@ -185,6 +279,13 @@ const authenticateToken = (req: any, res: any, next: any) => {
     req.user = user;
     next();
   });
+};
+
+const requireAdmin = (req: any, res: any, next: any) => {
+  if (String(req.user?.email || "").toLowerCase() !== ADMIN_EMAIL) {
+    return res.status(403).json({ error: "Admin access required", requestId: getRequestId(req) });
+  }
+  next();
 };
 
 // ── Express app ─────────────────────────────────────────────────────────────
@@ -548,6 +649,66 @@ app.post("/user/change-password", authenticateToken, async (req: any, res) => {
   }
 });
 
+// ── Admin: Customers with orders ────────────────────────────────────────────
+app.get("/admin/customers", authenticateToken, requireAdmin, async (req: any, res) => {
+  try {
+    await ensureDatabase();
+    const client = getTursoClient();
+    const result = await client.execute(`
+      SELECT
+        users.id,
+        users.email,
+        users.created_at,
+        COUNT(acquisitions.id) AS order_count,
+        MAX(acquisitions.created_at) AS last_order_at
+      FROM users
+      INNER JOIN acquisitions ON acquisitions.user_id = users.id
+      GROUP BY users.id, users.email, users.created_at
+      ORDER BY last_order_at DESC
+    `);
+    res.json(result.rows);
+  } catch (error: any) {
+    logError(req, "Admin customers failed", error);
+    res.status(500).json({ error: error.message, requestId: getRequestId(req) });
+  }
+});
+
+app.get("/admin/customers/:id/orders", authenticateToken, requireAdmin, async (req: any, res) => {
+  try {
+    await ensureDatabase();
+    const client = getTursoClient();
+    const result = await client.execute({
+      sql: "SELECT * FROM acquisitions WHERE user_id = ? ORDER BY created_at DESC",
+      args: [req.params.id],
+    });
+    res.json(result.rows);
+  } catch (error: any) {
+    logError(req, "Admin customer orders failed", error, { customerId: req.params.id });
+    res.status(500).json({ error: error.message, requestId: getRequestId(req) });
+  }
+});
+
+app.post("/admin/send-email", authenticateToken, requireAdmin, async (req: any, res) => {
+  const { to, subject, message } = req.body;
+  if (!to || !subject || !message) {
+    return res.status(400).json({ error: "Destinataire, sujet et message requis", requestId: getRequestId(req) });
+  }
+
+  try {
+    const safeMessage = String(message).replace(/\n/g, "<br />");
+    await sendEmail(
+      to,
+      subject,
+      message,
+      `<div style="font-family:Arial,sans-serif;line-height:1.6;color:#111"><p>${safeMessage}</p></div>`
+    );
+    res.json({ message: "Email envoyé", requestId: getRequestId(req) });
+  } catch (error: any) {
+    logError(req, "Admin send email failed", error, { to });
+    res.status(500).json({ error: error.message, requestId: getRequestId(req) });
+  }
+});
+
 // ── Stripe: Create checkout session ─────────────────────────────────────────
 app.post("/create-checkout-session", async (req: any, res) => {
   const { productId, productName, price, userEmail } = req.body;
@@ -585,6 +746,34 @@ app.post("/create-checkout-session", async (req: any, res) => {
   }
 });
 
+// ── Stripe: Confirm checkout after redirect ─────────────────────────────────
+app.post("/confirm-checkout-session", authenticateToken, async (req: any, res) => {
+  const { sessionId } = req.body;
+  if (!sessionId) {
+    return res.status(400).json({ error: "Session Stripe manquante", requestId: getRequestId(req) });
+  }
+
+  try {
+    const stripeClient = getStripe();
+    const session = await stripeClient.checkout.sessions.retrieve(sessionId);
+    const sessionEmail = session.customer_email || session.customer_details?.email;
+
+    if (!sessionEmail || sessionEmail !== req.user.email) {
+      return res.status(403).json({ error: "Cette commande n'est pas liée à ce compte", requestId: getRequestId(req) });
+    }
+
+    const result = await fulfillCheckoutSession(session, getRequestId(req));
+    if (!result.fulfilled) {
+      return res.status(400).json({ error: result.reason || "Commande non confirmée", requestId: getRequestId(req) });
+    }
+
+    res.json({ message: "Commande confirmée", ...result, requestId: getRequestId(req) });
+  } catch (error: any) {
+    logError(req, "Stripe checkout confirmation failed", error, { sessionId });
+    res.status(500).json({ error: error.message, requestId: getRequestId(req) });
+  }
+});
+
 // ── Stripe: Webhook ─────────────────────────────────────────────────────────
 app.post("/webhooks/stripe", async (req: any, res) => {
   const sig = req.headers["stripe-signature"] as string;
@@ -602,37 +791,11 @@ app.post("/webhooks/stripe", async (req: any, res) => {
   logInfo(req, "Stripe webhook verified", { eventType: event.type });
   if (event.type === "checkout.session.completed") {
     const session = event.data.object as Stripe.Checkout.Session;
-    const metadata = session.metadata;
-    const userEmail = session.customer_email;
-
-    if (metadata && userEmail) {
-      try {
-        const client = getTursoClient();
-        await ensureDatabase();
-        const userResult = await client.execute({
-          sql: "SELECT id FROM users WHERE email = ?",
-          args: [userEmail],
-        });
-        const userId = userResult.rows[0]?.id;
-
-        if (userId) {
-          logInfo(req, "Stripe webhook fulfilling order", { userEmail, userId, productId: metadata.productId });
-          await client.execute({
-            sql: "INSERT INTO acquisitions (user_id, product_id, product_name, preview_url) VALUES (?, ?, ?, ?)",
-            args: [userId, metadata.productId, metadata.productName, "https://example.com/preview"],
-          });
-          const licenseKey = `LIC-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
-          await client.execute({
-            sql: "INSERT INTO licenses (user_id, product_id, product_name, license_key) VALUES (?, ?, ?, ?)",
-            args: [userId, metadata.productId, metadata.productName, licenseKey],
-          });
-          logInfo(req, "Stripe webhook order fulfilled", { userEmail, userId });
-        } else {
-          logInfo(req, "Stripe webhook user not found", { userEmail });
-        }
-      } catch (error) {
-        logError(req, "Failed to fulfill order via webhook", error, { userEmail });
-      }
+    try {
+      const result = await fulfillCheckoutSession(session, getRequestId(req));
+      logInfo(req, "Stripe webhook fulfillment result", { sessionId: session.id, ...result });
+    } catch (error) {
+      logError(req, "Failed to fulfill order via webhook", error, { sessionId: session.id });
     }
   }
 

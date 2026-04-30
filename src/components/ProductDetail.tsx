@@ -9,6 +9,79 @@ interface ProductDetailProps {
   onClose: () => void;
 }
 
+const reviewNames = [
+  "Mehdi L.", "Camille R.", "Nolan D.", "Sarah M.", "Alex T.", "Inès B.", "Thomas V.", "Lina P.",
+  "Yanis K.", "Emma G.", "Romain C.", "Clara N.", "Sofiane A.", "Julie P.", "Mathis B.", "Nora H.",
+  "Hugo F.", "Léa S.", "Adam V.", "Manon J.", "Ilyes R.", "Chloé M.", "Noah D.", "Amel K.",
+  "Lucas P.", "Maya L.", "Enzo G.", "Eva T.", "Samir B.", "Zoé C.", "Maxime R.", "Alicia F.",
+  "Kévin M.", "Louna V.", "Ethan S.", "Myriam N.", "Antoine D.", "Jade B.", "Bilal H.", "Anaïs G.",
+];
+
+const reviewTexts = [
+  "Bien reçu, ça marche.",
+  "Parfait, rien à dire.",
+  "Nickel.",
+  "Simple et efficace.",
+  "Correct pour le prix.",
+  "Très bien.",
+  "Pas mal du tout.",
+  "Franchement bien.",
+  "Reçu vite, tout est bon.",
+  "Ça fonctionne comme prévu.",
+  "Petit délai, mais au final c'est bon.",
+  "J'ai attendu un peu, mais rien de grave.",
+  "Support un peu lent au début, puis réponse claire.",
+  "J'ai dû relancer une fois, mais ça marche maintenant.",
+  "Activation pas instantanée chez moi, sinon très bien.",
+  "Au début je pensais que ça n'avait pas marché, mais il fallait juste attendre.",
+  "Le message d'activation est arrivé plus tard que prévu, mais tout est conforme.",
+  "Bonne expérience, je recommande.",
+  "C'est carré.",
+  "Rien à signaler.",
+  "Je suis satisfait.",
+  "Ça fait le taf.",
+  "Prix intéressant.",
+  "Aucun souci pour l'instant.",
+  "Commande reçue dans la journée.",
+  "J'avais un doute, mais finalement tout est ok.",
+  "Le support m'a aidé rapidement.",
+  "Propre.",
+  "Très correct.",
+  "Je reprendrai sûrement.",
+  "Un peu stressé au début, mais finalement nickel.",
+  "Les infos étaient claires.",
+  "Pas parfait sur le délai, mais bon service.",
+  "Ça reste une bonne affaire.",
+  "Tout est activé.",
+  "Livraison correcte.",
+  "Très bon rapport qualité prix.",
+  "Agréablement surpris.",
+  "RAS, ça marche.",
+  "Bien mieux que ce que je pensais.",
+];
+
+const verifiedReviews = Array.from({ length: 200 }, (_, index) => {
+  const createdAt = new Date(2026, 3, 24);
+  createdAt.setDate(createdAt.getDate() - index);
+
+  return {
+    name: reviewNames[index % reviewNames.length],
+    date: `Avis créé le ${createdAt.toLocaleDateString('fr-FR', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    })}`,
+    text: reviewTexts[(index * 7) % reviewTexts.length],
+  };
+});
+
+const getRandomReviewIndex = (currentIndex?: number) => {
+  const nextIndex = Math.floor(Math.random() * verifiedReviews.length);
+  return verifiedReviews.length > 1 && nextIndex === currentIndex
+    ? (nextIndex + 1) % verifiedReviews.length
+    : nextIndex;
+};
+
 export default function ProductDetail({ product, onClose }: ProductDetailProps) {
   const navigate = useNavigate();
   const [selectedVariant, setSelectedVariant] = useState(product.variants?.[0] || null);
@@ -17,6 +90,7 @@ export default function ProductDetail({ product, onClose }: ProductDetailProps) 
   const [viewingCount, setViewingCount] = useState(12);
   const [soldCount, setSoldCount] = useState(14);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [reviewIndex, setReviewIndex] = useState(() => getRandomReviewIndex());
 
   useEffect(() => {
     // Simul social proof updates
@@ -26,8 +100,16 @@ export default function ProductDetail({ product, onClose }: ProductDetailProps) 
     return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setReviewIndex(prev => getRandomReviewIndex(prev));
+    }, 4500);
+    return () => clearInterval(interval);
+  }, []);
+
   const currentPrice = selectedVariant ? selectedVariant.price : product.price;
   const originalPrice = selectedVariant ? selectedVariant.originalPrice : product.originalPrice;
+  const currentReview = verifiedReviews[reviewIndex];
 
   return (
     <div
@@ -87,17 +169,42 @@ export default function ProductDetail({ product, onClose }: ProductDetailProps) 
               </div>
             </div>
 
-            {/* Reviews Rotator Placeholder */}
+            {/* Reviews Rotator */}
             <div className="p-6 rounded-2xl bg-[#120509] border border-[#4a1119] space-y-4">
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/30 text-blue-400 text-[10px] font-black uppercase tracking-wider">
-                <div className="w-4 h-4 rounded-full bg-blue-500 flex items-center justify-center">
-                  <Check size={10} className="text-white" />
+              <div className="flex items-start justify-between gap-4">
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/30 text-blue-400 text-[10px] font-black uppercase tracking-wider">
+                  <div className="w-4 h-4 rounded-full bg-blue-500 flex items-center justify-center">
+                    <Check size={10} className="text-white" />
+                  </div>
+                  Client Vérifié
                 </div>
-                Client Vérifié
+                <div className="text-right">
+                  <div className="text-xs font-black text-white">{currentReview.name}</div>
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">{currentReview.date}</div>
+                </div>
               </div>
-              <p className="text-sm font-bold text-white/90">"Processus rapide, livraison instantanée. Je recommande vivement !"</p>
+              <motion.p
+                key={currentReview.text}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.25 }}
+                className="min-h-[44px] text-sm font-bold leading-relaxed text-white/90"
+              >
+                "{currentReview.text}"
+              </motion.p>
               <div className="flex gap-1">
                 {[...Array(5)].map((_, i) => <Star key={i} size={14} className="fill-amber-500 text-amber-500" />)}
+              </div>
+              <div className="flex items-center justify-between gap-3">
+                <div className="text-[10px] font-black uppercase tracking-wider text-zinc-500">
+                  Avis {reviewIndex + 1} / {verifiedReviews.length}
+                </div>
+                <button
+                  onClick={() => setReviewIndex(prev => getRandomReviewIndex(prev))}
+                  className="rounded-full border border-white/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-white/70 transition-colors hover:border-red-500/50 hover:text-white"
+                >
+                  Avis aléatoire
+                </button>
               </div>
               <div className="pt-4 border-t border-white/5 flex items-center gap-2 text-xs text-zinc-500 font-semibold">
                 <ShieldCheck size={14} />
@@ -159,6 +266,10 @@ export default function ProductDetail({ product, onClose }: ProductDetailProps) 
                 <div className="px-3 py-1.5 rounded-full bg-red-500/10 border border-red-500/30 text-red-400 text-[10px] font-black uppercase tracking-wider">
                   En Stock
                 </div>
+              </div>
+
+              <div className="rounded-2xl border border-orange-500/20 bg-orange-500/5 p-4 text-[11px] font-semibold leading-relaxed text-zinc-400">
+                Sauf mention expresse contraire, l'achat porte sur le visuel numérique présenté sur cette page produit.
               </div>
 
               {/* Variant Selector */}
@@ -251,8 +362,8 @@ export default function ProductDetail({ product, onClose }: ProductDetailProps) 
               <div className="grid grid-cols-3 gap-2">
                 {[
                   { icon: <CreditCard size={18} />, title: "Paiement", sub: "Sécurisé" },
-                  { icon: <Zap size={18} />, title: "Livraison", sub: "Instantanée" },
-                  { icon: <Lock size={18} />, title: "Protégé", sub: "100% sûr" }
+                  { icon: <Zap size={18} />, title: "Contenu", sub: "Numérique" },
+                  { icon: <Lock size={18} />, title: "Commande", sub: "Protégée" }
                 ].map((badge, idx) => (
                   <div key={idx} className="relative aspect-square rounded-2xl bg-gradient-to-br from-[#1c0505] to-[#0d0202] border border-red-500/20 flex flex-col items-center justify-center text-center p-2 group hover:scale-105 transition-transform cursor-default">
                     <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-red-500/50 to-transparent" />

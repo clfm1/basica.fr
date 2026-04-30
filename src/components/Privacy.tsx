@@ -12,7 +12,7 @@ export default function Privacy() {
           <h1 className="text-4xl font-black mb-4 tracking-tight">Politique de Confidentialité</h1>
           <p className="text-zinc-400 mb-12 text-lg leading-relaxed">
             Basico s'engage à traiter en toute sécurité les métadonnées nécessaires à la fourniture de nos services. 
-            Ce document décrit comment nous gérons les identifiants liés aux transferts d'abonnements et de données numériques.
+            Ce document décrit comment nous gérons les informations liées aux commandes, à la livraison de contenus numériques et au support.
           </p>
 
           <div className="space-y-12 text-zinc-400 leading-relaxed">
@@ -23,10 +23,12 @@ export default function Privacy() {
 
             <section>
               <h2 className="text-xl font-black tracking-widest uppercase mb-4 text-white">1. Informations Collectées</h2>
-              <p className="mb-4">Nous conservons les enregistrements des identifiants nécessaires à la synchronisation des données :</p>
+              <p className="mb-4">Nous pouvons conserver les informations nécessaires au traitement d'une commande, à la livraison et au support :</p>
               <ul className="list-disc pl-5 space-y-2">
-                <li><strong className="text-white">Métadonnées de Transfert :</strong> Identifiants de base utilisés pour associer un utilisateur à un événement d'acquisition spécifique.</li>
-                <li><strong className="text-white">Marqueurs de Livraison :</strong> Indicateurs confirmant qu'un service ou fichier numérique a été présenté avec succès à l'utilisateur.</li>
+                <li><strong className="text-white">Données de commande :</strong> produit sélectionné, prix, date, statut de paiement et références nécessaires au suivi.</li>
+                <li><strong className="text-white">Coordonnées fournies :</strong> informations communiquées volontairement pour recevoir la livraison ou contacter le support.</li>
+                <li><strong className="text-white">Marqueurs de livraison :</strong> éléments confirmant qu'un contenu numérique a été mis à disposition.</li>
+                <li><strong className="text-white">Données techniques :</strong> informations de navigation, sécurité, prévention de la fraude et bon fonctionnement du site.</li>
               </ul>
             </section>
 
@@ -34,16 +36,21 @@ export default function Privacy() {
               <h2 className="text-xl font-black tracking-widest uppercase mb-4 text-white">2. Utilisation des Données</h2>
               <p className="mb-4">Les informations enregistrées sont utilisées exclusivement pour :</p>
               <ul className="list-disc pl-5 space-y-2">
-                <li>Vérifier le bon fonctionnement et l'affichage des services acquis.</li>
-                <li>Surveiller en interne le trafic du catalogue.</li>
+                <li>Traiter les paiements, commandes et livraisons.</li>
+                <li>Assurer le support client et répondre aux demandes.</li>
+                <li>Prévenir la fraude, les abus, les contestations injustifiées et les incidents de sécurité.</li>
+                <li>Améliorer le fonctionnement du catalogue et de l'expérience utilisateur.</li>
               </ul>
             </section>
 
             <section>
               <h2 className="text-xl font-black tracking-widest uppercase mb-4 text-white">3. Portée du Service</h2>
               <p>
-                Notre cadre opérationnel est dédié uniquement à la distribution d'actifs numériques et services fitness/gaming. 
-                La collecte de données est calibrée pour soutenir ce modèle de distribution.
+                Notre cadre opérationnel est dédié à la distribution de contenus numériques. 
+                La collecte de données est limitée aux informations utiles à la commande, à la livraison, au support, à la conformité et à la sécurité.
+              </p>
+              <p className="mt-4">
+                Sauf mention expresse contraire, l'achat porte sur le visuel numérique présenté sur la page produit correspondante.
               </p>
             </section>
 
@@ -59,7 +66,7 @@ export default function Privacy() {
 
             <section>
               <h2 className="text-xl font-black tracking-widest uppercase mb-4 text-white">5. Partage d'Informations</h2>
-              <p>Nous ne vendons ni ne partageons vos données personnelles avec des tiers, sauf si cela est nécessaire pour traiter les paiements, prévenir les activités frauduleuses, se conformer aux obligations légales ou fournir des services essentiels.</p>
+              <p>Nous ne vendons pas vos données personnelles. Elles peuvent être transmises uniquement aux prestataires nécessaires au paiement, à l'hébergement, à la sécurité, à la livraison, au support, à la prévention de la fraude ou au respect d'une obligation légale.</p>
             </section>
 
             <section>
@@ -69,7 +76,7 @@ export default function Privacy() {
 
             <section>
               <h2 className="text-xl font-black tracking-widest uppercase mb-4 text-white">7. Rétention des Données</h2>
-              <p>Nous conservons les données utilisateur uniquement le temps nécessaire à la conformité légale, à la sécurité et à l'exploitation du service. Lorsqu'elles ne sont plus nécessaires, elles sont supprimées de manière sécurisée.</p>
+              <p>Nous conservons les données utilisateur uniquement le temps nécessaire à l'exécution des commandes, à la conformité légale, à la sécurité, à la gestion des litiges et à l'exploitation du service. Lorsqu'elles ne sont plus nécessaires, elles sont supprimées ou anonymisées de manière sécurisée.</p>
             </section>
 
             <section>

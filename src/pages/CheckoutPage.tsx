@@ -286,14 +286,25 @@ export default function CheckoutPage() {
                   Note importante
                 </div>
                 <p className="text-[10px] text-zinc-400 leading-relaxed font-medium">
-                  Votre licence sera délivrée instantanément dans votre espace client après confirmation du paiement.
+                  Sauf mention expresse contraire, cette commande concerne le visuel numérique présenté sur la page produit.
                 </p>
               </div>
+
+              <label className="flex items-start gap-3 rounded-2xl border border-white/10 bg-black/30 p-4 text-[10px] font-medium leading-relaxed text-zinc-400">
+                <input
+                  required
+                  type="checkbox"
+                  className="mt-0.5 h-4 w-4 rounded border-white/20 bg-black accent-orange-600"
+                />
+                <span>
+                  J'accepte les Conditions Générales, la Politique de Confidentialité et la Politique de Remboursement. Je reconnais que la livraison d'un contenu numérique peut commencer immédiatement après le paiement.
+                </span>
+              </label>
 
               <div className="space-y-4 pt-4">
                 <div className="flex items-center gap-3 text-emerald-500/70">
                   <ShieldCheck size={18} />
-                  <span className="text-[10px] font-black uppercase tracking-widest">Garantie satisfait ou remboursé</span>
+                  <span className="text-[10px] font-black uppercase tracking-widest">Commande numérique sécurisée</span>
                 </div>
               </div>
             </div>

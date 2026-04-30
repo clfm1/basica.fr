@@ -11,48 +11,47 @@ export default function Refund() {
         >
           <h1 className="text-4xl font-black mb-4 tracking-tight">Politique de Remboursement</h1>
           <p className="text-zinc-400 mb-8 text-lg leading-relaxed">
-            Basico utilise un modèle de distribution spécialisé pour les actifs numériques et services. 
-            En finalisant une acquisition, vous reconnaissez l'exécution immédiate du transfert de données ou de service.
+            Basico utilise un modèle de distribution spécialisé pour les contenus numériques. 
+            En finalisant une acquisition, vous reconnaissez l'exécution immédiate ou rapide de la mise à disposition du contenu commandé.
           </p>
 
           <div className="space-y-12 text-zinc-400 leading-relaxed">
             <section>
               <h2 className="text-xl font-black tracking-widest uppercase mb-4 text-white">1. Clause d'Exécution</h2>
               <p>
-                Nos produits étant exclusivement des services numériques ou des actifs dématérialisés, la livraison est considérée comme instantanée et totale dès la confirmation. 
-                Tous les transferts sont définitifs.
+                Nos produits étant des contenus numériques fournis sans support matériel, la livraison est considérée comme exécutée dès que le contenu est mis à disposition selon les modalités indiquées lors de la commande. 
+                Sauf mention expresse contraire, l'achat porte sur le visuel numérique présenté sur la page produit correspondante.
               </p>
             </section>
 
             <section>
               <h2 className="text-xl font-black tracking-widest uppercase mb-4 text-white">2. Critères d'Éligibilité</h2>
               <p className="mb-4">
-                La réclamation de fonds est soumise à des critères de évaluation stricts. 
-                En règle générale, en raison de la nature irrévocable de la livraison de données numériques, les acquisitions ne sont pas éligibles au remboursement.
+                Toute demande est étudiée au cas par cas. En raison de la nature immédiatement accessible des contenus numériques, une commande déjà livrée n'est en principe pas remboursable, sauf erreur manifeste de livraison, double paiement, annulation par Basico avant livraison ou obligation légale contraire.
               </p>
             </section>
 
             <section>
               <h2 className="text-xl font-black tracking-widest uppercase mb-4 text-white">3. Écarts de Représentation</h2>
               <p className="mb-4">
-                Notre prestation est limitée au service ou fichier numérique défini. Les descriptions textuelles sont supplémentaires et non contraignantes. 
-                Les écarts entre le texte supplémentaire et l'actif réel ne constituent pas un motif de remboursement si l'actif lui-même a été livré.
+                Notre prestation est limitée au contenu numérique défini sur la page produit. Les titres, catégories, exemples ou références à des univers tiers servent à classer ou illustrer le contenu et ne garantissent pas la fourniture d'un compte, abonnement, objet physique, avantage en jeu ou service tiers.
+              </p>
+              <p>
+                Un remboursement ne peut pas être fondé sur une attente non mentionnée de manière expresse dans la description contractuelle du produit.
               </p>
             </section>
 
             <section>
               <h2 className="text-xl font-black tracking-widest uppercase mb-4 text-white">4. Résolution Technique</h2>
               <p className="mb-4">
-                En cas d'erreur dans la livraison d'un actif numérique, notre équipe de support Discord fournira une solution de remplacement. 
-                L'engagement dans des processus de litige externes sans tentative préalable de conciliation entraînera des restrictions administratives.
+                En cas d'erreur de livraison, de fichier inaccessible ou de problème technique directement imputable à Basico, notre équipe de support Discord pourra fournir un nouveau lien, un remplacement équivalent ou une correction adaptée.
               </p>
             </section>
 
             <section>
               <h2 className="text-xl font-black tracking-widest uppercase mb-4 text-white">5. Oppositions et Litiges Paiement</h2>
               <p>
-                L'initiation d'une opposition de paiement non autorisée est une violation directe de ces Conditions. 
-                Basico se réserve le droit de bannir définitivement tout utilisateur abusant du système de litige.
+                Avant toute opposition de paiement, l'utilisateur est invité à contacter le support afin de permettre une résolution amiable. Les oppositions abusives, frauduleuses ou engagées malgré une livraison conforme peuvent entraîner une restriction d'accès au service et la conservation des preuves de commande nécessaires à la défense de Basico.
               </p>
             </section>
 

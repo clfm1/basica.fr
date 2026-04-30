@@ -15,12 +15,12 @@ export const CATEGORIES: Category[] = [
     image: "/gaming.png",
     popularity: 77362,
     pin: 0,
-    productCount: 5
+    productCount: 4
   },
   {
     id: "fortnite",
     name: "Comptes Fortnite",
-    image: "https://images.unsplash.com/photo-1589241062272-c0a000072dfa?q=80&w=1024&auto=format&fit=crop",
+    image: "/accountfortnite.jpg",
     popularity: 1500,
     pin: 0,
     productCount: 2,
@@ -29,16 +29,16 @@ export const CATEGORIES: Category[] = [
   {
     id: "roblox",
     name: "Comptes Roblox",
-    image: "https://images.unsplash.com/photo-1614680376593-902f74cf0d41?q=80&w=1024&auto=format&fit=crop",
+    image: "/accountroblox.png",
     popularity: 1200,
     pin: 0,
-    productCount: 2,
+    productCount: 1,
     parentId: "accounts"
   },
   {
     id: "valorant",
     name: "Comptes Valorant",
-    image: "https://images.unsplash.com/photo-1624138784614-87fd1b6528f8?q=80&w=1024&auto=format&fit=crop",
+    image: "/accountvalorante.jpg",
     popularity: 1100,
     pin: 0,
     productCount: 1,
@@ -47,17 +47,8 @@ export const CATEGORIES: Category[] = [
   {
     id: "gta",
     name: "Comptes GTA V",
-    image: "https://images.unsplash.com/photo-1533234451711-20906803733d?q=80&w=1024&auto=format&fit=crop",
+    image: "/accountgta.webp",
     popularity: 1000,
-    pin: 0,
-    productCount: 1,
-    parentId: "accounts"
-  },
-  {
-    id: "minecraft",
-    name: "Comptes Minecraft",
-    image: "https://images.unsplash.com/photo-1615678815958-5910c6811c25?q=80&w=1024&auto=format&fit=crop",
-    popularity: 900,
     pin: 0,
     productCount: 1,
     parentId: "accounts"
@@ -75,24 +66,24 @@ export const CATEGORIES: Category[] = [
 export const PRODUCTS: Product[] = [
   {
     id: "basic-fit",
-    name: "Abonnement Basic Fit (10€ - 90€)",
+    name: "Abonnement Basic-Fit Ultimate",
     price: 10,
     image: "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=1024&auto=format&fit=crop",
     categories: ["fitness"],
     popularity: 850,
     pin: 0,
     url: "#",
-    description: "Profitez de l'accès à toutes les salles Basic Fit en Europe avec l'abonnement leader du fitness. Accès illimité, équipements de pointe et cours collectifs virtuels inclus.",
-    features: ["Accès illimité", "Équipements Matrix", "Basic-Fit App", "Partageable"],
+    description: "Abonnement Basic-Fit Ultimate, proposé de base à 35€ par mois. Il inclut l'accès illimité aux salles, Yanga illimité, le siège massant illimité et la possibilité d'inviter une personne avec vous en illimité.",
+    features: ["Ultimate 35€/mois", "Yanga illimité", "Siège massant illimité", "Invité illimité"],
     variants: [
-      { label: "Abonnement Mensuel Basic", price: 10, originalPrice: 15 },
-      { label: "Pack Trimestriel Comfort", price: 45, originalPrice: 50 },
-      { label: "Annuel Premium All-In", price: 90, originalPrice: 120 }
+      { label: "Ultimate Mensuel", price: 10, originalPrice: 35 },
+      { label: "Ultimate 3 Mois", price: 45, originalPrice: 105 },
+      { label: "Ultimate Annuel", price: 90, originalPrice: 420 }
     ]
   },
   {
     id: "fitness-park",
-    name: "Abonnement Fitness Park (12€ - 100€)",
+    name: "Abonnement Fitness Park",
     price: 12,
     image: "https://images.unsplash.com/photo-1593079831268-3381b0db4a77?q=80&w=1024&auto=format&fit=crop",
     categories: ["fitness"],
@@ -111,7 +102,7 @@ export const PRODUCTS: Product[] = [
     id: "fortnite-og",
     name: "Fortnite OG Account",
     price: 45,
-    image: "https://southgg.xyz/wp-content/uploads/2025/12/erfsdfsdffsd234-123213126546-1024x576.png",
+    image: "/accountfortnite.jpg",
     categories: ["accounts", "fortnite"],
     popularity: 1500,
     pin: 1,
@@ -123,7 +114,7 @@ export const PRODUCTS: Product[] = [
     id: "fortnite-stacked",
     name: "Fortnite Stacked Account",
     price: 30,
-    image: "https://images.unsplash.com/photo-1589241062272-c0a000072dfa?q=80&w=1024&auto=format&fit=crop",
+    image: "/accountfortnite.jpg",
     categories: ["accounts", "fortnite"],
     popularity: 1200,
     pin: 0,
@@ -135,7 +126,7 @@ export const PRODUCTS: Product[] = [
     id: "roblox-stacked",
     name: "Roblox Stacked Account",
     price: 20,
-    image: "https://images.unsplash.com/photo-1614680376593-902f74cf0d41?q=80&w=1024&auto=format&fit=crop",
+    image: "/accountroblox.png",
     categories: ["accounts", "roblox"],
     popularity: 800,
     pin: 0,
@@ -147,7 +138,7 @@ export const PRODUCTS: Product[] = [
     id: "valorant-account",
     name: "Valorant Ranked Ready",
     price: 15,
-    image: "https://images.unsplash.com/photo-1624138784614-87fd1b6528f8?q=80&w=1024&auto=format&fit=crop",
+    image: "/accountvalorante.jpg",
     categories: ["accounts", "valorant"],
     popularity: 800,
     pin: 0,
@@ -159,25 +150,13 @@ export const PRODUCTS: Product[] = [
     id: "gta-account",
     name: "GTA V Modded Account",
     price: 25,
-    image: "https://images.unsplash.com/photo-1533234451711-20906803733d?q=80&w=1024&auto=format&fit=crop",
+    image: "/accountgta.webp",
     categories: ["accounts", "gta"],
     popularity: 600,
     pin: 0,
     url: "#",
     description: "GTA V modded accounts for PC/Console with billions in cash and high rank.",
     features: ["Max Cash", "Modded Outfits", "Anti-Ban Guarantee"]
-  },
-  {
-    id: "minecraft-account",
-    name: "Minecraft Full Access",
-    price: 10,
-    image: "https://images.unsplash.com/photo-1615678815958-5910c6811c25?q=80&w=1024&auto=format&fit=crop",
-    categories: ["accounts", "minecraft"],
-    popularity: 700,
-    pin: 0,
-    url: "#",
-    description: "Minecraft Java & Bedrock Edition with full email access.",
-    features: ["Java & Bedrock", "Clean History", "Change Skin/Name"]
   },
   {
     id: "v-bucks",

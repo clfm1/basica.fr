@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS acquisitions (
     product_id TEXT NOT NULL,
     product_name TEXT NOT NULL,
     preview_url TEXT NOT NULL,
+    stripe_session_id TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id)
 );
@@ -26,6 +27,7 @@ CREATE TABLE IF NOT EXISTS licenses (
     product_id TEXT NOT NULL,
     product_name TEXT NOT NULL,
     license_key TEXT NOT NULL,
+    stripe_session_id TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id)
 );

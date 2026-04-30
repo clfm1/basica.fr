@@ -10,6 +10,7 @@ import Terms from './components/Terms';
 import Privacy from './components/Privacy';
 import Refund from './components/Refund';
 import Account from './components/Account';
+import PurchaseNotifications from './components/PurchaseNotifications';
 import ProductPage from './pages/ProductPage';
 import CheckoutPage from './pages/CheckoutPage';
 import { useEffect } from 'react';
@@ -54,6 +55,7 @@ export default function App() {
         </main>
 
         <Footer />
+        <PurchaseNotifications />
       </div>
     </Router>
   );
