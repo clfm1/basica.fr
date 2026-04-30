@@ -221,6 +221,17 @@ export default function CheckoutPage() {
                 </div>
               </div>
 
+              <label className="flex items-start gap-3 rounded-2xl border border-white/10 bg-black/30 p-4 text-xs font-medium leading-relaxed text-zinc-400">
+                <input
+                  required
+                  type="checkbox"
+                  className="mt-0.5 h-4 w-4 shrink-0 rounded border-white/20 bg-black accent-orange-600"
+                />
+                <span>
+                  J'approuve avoir lu et accepté les <a href="/terms" className="text-orange-500 hover:text-orange-400 underline underline-offset-4">Conditions Générales</a>, la <a href="/privacy" className="text-orange-500 hover:text-orange-400 underline underline-offset-4">Politique de Confidentialité</a> et la <a href="/refund" className="text-orange-500 hover:text-orange-400 underline underline-offset-4">Politique de Remboursement</a>.
+                </span>
+              </label>
+
               <button 
                 type="submit"
                 disabled={isProcessing}
@@ -289,17 +300,6 @@ export default function CheckoutPage() {
                   Sauf mention expresse contraire, cette commande concerne le visuel numérique présenté sur la page produit.
                 </p>
               </div>
-
-              <label className="flex items-start gap-3 rounded-2xl border border-white/10 bg-black/30 p-4 text-[10px] font-medium leading-relaxed text-zinc-400">
-                <input
-                  required
-                  type="checkbox"
-                  className="mt-0.5 h-4 w-4 rounded border-white/20 bg-black accent-orange-600"
-                />
-                <span>
-                  J'accepte les Conditions Générales, la Politique de Confidentialité et la Politique de Remboursement. Je reconnais que la livraison d'un contenu numérique peut commencer immédiatement après le paiement.
-                </span>
-              </label>
 
               <div className="space-y-4 pt-4">
                 <div className="flex items-center gap-3 text-emerald-500/70">
