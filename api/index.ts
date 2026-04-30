@@ -268,6 +268,30 @@ async function fulfillCheckoutSession(session: Stripe.Checkout.Session, requestI
   return { fulfilled: true, hasAccount: !!userId };
 }
 
+async function getPaidStripeOrdersByEmail(email?: string) {
+  if (!process.env.STRIPE_SECRET_KEY) return [];
+
+  const stripeClient = getStripe();
+  const sessions = await stripeClient.checkout.sessions.list({ limit: 100 });
+
+  return sessions.data
+    .filter((session) => session.payment_status === "paid")
+    .filter((session) => {
+      const sessionEmail = session.customer_email || session.customer_details?.email || "";
+      return email ? sessionEmail.toLowerCase() === email.toLowerCase() : !!sessionEmail;
+    })
+    .map((session) => ({
+      id: session.id,
+      product_id: session.metadata?.productId || "",
+      product_name: session.metadata?.productName || "Commande Stripe",
+      created_at: new Date(session.created * 1000).toISOString(),
+      total: typeof session.amount_total === "number" ? session.amount_total / 100 : null,
+      status: session.payment_status,
+      customer_email: session.customer_email || session.customer_details?.email || "",
+      source: "stripe",
+    }));
+}
+
 // ── Auth middleware ──────────────────────────────────────────────────────────
 const authenticateToken = (req: any, res: any, next: any) => {
   const authHeader = req.headers["authorization"];
@@ -666,24 +690,73 @@ app.get("/admin/customers", authenticateToken, requireAdmin, async (req: any, re
       GROUP BY users.id, users.email, users.created_at
       ORDER BY last_order_at DESC
     `);
-    res.json(result.rows);
+    const customers = new Map<string, any>();
+
+    for (const row of result.rows) {
+      const email = String(row.email || "").toLowerCase();
+      customers.set(email, {
+        id: email,
+        email: row.email,
+        created_at: row.created_at,
+        order_count: Number(row.order_count || 0),
+        last_order_at: row.last_order_at,
+        sources: ["account"],
+      });
+    }
+
+    const stripeOrders = await getPaidStripeOrdersByEmail();
+    for (const order of stripeOrders) {
+      const email = String(order.customer_email || "").toLowerCase();
+      const stripeOrderCount = stripeOrders.filter((item) => item.customer_email.toLowerCase() === email).length;
+      const existing = customers.get(email);
+      if (existing) {
+        existing.order_count = Math.max(existing.order_count, stripeOrderCount);
+        existing.last_order_at = existing.last_order_at && existing.last_order_at > order.created_at ? existing.last_order_at : order.created_at;
+        if (!existing.sources.includes("stripe")) existing.sources.push("stripe");
+      } else {
+        customers.set(email, {
+          id: email,
+          email: order.customer_email,
+          created_at: null,
+          order_count: stripeOrderCount,
+          last_order_at: order.created_at,
+          sources: ["stripe"],
+        });
+      }
+    }
+
+    res.json(Array.from(customers.values()).sort((a, b) => String(b.last_order_at || "").localeCompare(String(a.last_order_at || ""))));
   } catch (error: any) {
     logError(req, "Admin customers failed", error);
     res.status(500).json({ error: error.message, requestId: getRequestId(req) });
   }
 });
 
-app.get("/admin/customers/:id/orders", authenticateToken, requireAdmin, async (req: any, res) => {
+app.get("/admin/customers/:email/orders", authenticateToken, requireAdmin, async (req: any, res) => {
   try {
     await ensureDatabase();
     const client = getTursoClient();
+    const email = decodeURIComponent(req.params.email);
     const result = await client.execute({
-      sql: "SELECT * FROM acquisitions WHERE user_id = ? ORDER BY created_at DESC",
-      args: [req.params.id],
+      sql: `
+        SELECT acquisitions.*, users.email AS customer_email, 'account' AS source
+        FROM acquisitions
+        INNER JOIN users ON users.id = acquisitions.user_id
+        WHERE lower(users.email) = lower(?)
+        ORDER BY acquisitions.created_at DESC
+      `,
+      args: [email],
     });
-    res.json(result.rows);
+    const stripeOrders = await getPaidStripeOrdersByEmail(email);
+    const orders = [...result.rows, ...stripeOrders]
+      .filter((order: any, index, all) => {
+        const stripeSessionId = order.stripe_session_id || order.id;
+        return all.findIndex((item: any) => (item.stripe_session_id || item.id) === stripeSessionId) === index;
+      })
+      .sort((a: any, b: any) => String(b.created_at || "").localeCompare(String(a.created_at || "")));
+    res.json(orders);
   } catch (error: any) {
-    logError(req, "Admin customer orders failed", error, { customerId: req.params.id });
+    logError(req, "Admin customer orders failed", error, { email: req.params.email });
     res.status(500).json({ error: error.message, requestId: getRequestId(req) });
   }
 });

@@ -202,7 +202,7 @@ export default function Account() {
     setAdminMessage(null);
 
     try {
-      const res = await fetch(`/api/admin/customers/${customer.id}/orders`, {
+      const res = await fetch(`/api/admin/customers/${encodeURIComponent(customer.email)}/orders`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await readApiJson(res);
@@ -738,6 +738,7 @@ export default function Account() {
                                     <div className="font-bold text-white text-sm truncate">{customer.email}</div>
                                     <div className="mt-1 text-[10px] font-black uppercase tracking-widest text-zinc-500">
                                       {customer.order_count} commande{Number(customer.order_count) > 1 ? 's' : ''}
+                                      {customer.sources?.includes('stripe') ? ' · Stripe' : ''}
                                     </div>
                                   </button>
                                 ))
@@ -762,10 +763,12 @@ export default function Account() {
                                           <div className="flex items-center justify-between gap-3">
                                             <div>
                                               <div className="text-sm font-bold text-white">{order.product_name}</div>
-                                              <div className="text-[10px] text-zinc-500">Commande #{order.id}</div>
+                                              <div className="text-[10px] text-zinc-500">
+                                                Commande #{String(order.id).slice(0, 18)}{order.source ? ` · ${order.source}` : ''}
+                                              </div>
                                             </div>
                                             <div className="text-[10px] font-black uppercase tracking-widest text-emerald-500">
-                                              {new Date(order.created_at).toLocaleDateString('fr-FR')}
+                                              {order.total ? `${order.total}€ · ` : ''}{new Date(order.created_at).toLocaleDateString('fr-FR')}
                                             </div>
                                           </div>
                                         </div>
