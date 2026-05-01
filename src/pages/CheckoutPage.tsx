@@ -1,5 +1,5 @@
 import React from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { PRODUCTS } from '../constants';
 import { motion } from 'motion/react';
@@ -18,12 +18,19 @@ async function readApiJson(response: Response) {
 export default function CheckoutPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const product = PRODUCTS.find(p => p.id === id);
+  const selectedVariantLabel = searchParams.get('variant') || '';
+  const selectedVariantPrice = Number(searchParams.get('price'));
+  const checkoutBasePrice = Number.isFinite(selectedVariantPrice) ? selectedVariantPrice : product?.price || 0;
   
   const [email, setEmail] = useState('');
   const [cardName, setCardName] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [promoCode, setPromoCode] = useState('');
+  const [appliedPromo, setAppliedPromo] = useState<{ code: string; percent: number } | null>(null);
+  const [promoMessage, setPromoMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   useEffect(() => {
     if (!product) {
@@ -32,6 +39,45 @@ export default function CheckoutPage() {
   }, [product, navigate]);
 
   if (!product) return null;
+
+  const discountAmount = appliedPromo ? Math.round(checkoutBasePrice * appliedPromo.percent) / 100 : 0;
+  const finalPrice = Math.max(0, Math.round((checkoutBasePrice - discountAmount) * 100) / 100);
+
+  const handleApplyPromo = () => {
+    const normalizedCode = promoCode.trim().toUpperCase();
+    const fitnessPromoProducts = ['basic-fit', 'fitness-park'];
+    const promoCodes: Record<string, { percent: number; productIds: string[] }> = {
+      FITNESS45: { percent: 45, productIds: fitnessPromoProducts },
+    };
+
+    if (!normalizedCode) {
+      setAppliedPromo(null);
+      setPromoMessage({ type: 'error', text: 'Entre un code promo.' });
+      return;
+    }
+
+    const promo = promoCodes[normalizedCode];
+    if (!promo) {
+      setAppliedPromo(null);
+      setPromoMessage({ type: 'error', text: 'Code promo invalide.' });
+      return;
+    }
+
+    if (!promo.productIds.includes(product.id)) {
+      setAppliedPromo(null);
+      setPromoMessage({ type: 'error', text: 'Ce code est réservé aux abonnements Basic-Fit et Fitness Park.' });
+      return;
+    }
+
+    if (!selectedVariantLabel.toLowerCase().includes('annuel')) {
+      setAppliedPromo(null);
+      setPromoMessage({ type: 'error', text: 'Ce code est valable uniquement sur les formules à l’année.' });
+      return;
+    }
+
+    setAppliedPromo({ code: normalizedCode, percent: promo.percent });
+    setPromoMessage({ type: 'success', text: `${promo.percent}% de réduction appliqués.` });
+  };
 
   const handlePayment = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,8 +89,10 @@ export default function CheckoutPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           productId: product.id,
-          productName: product.name,
-          price: product.price,
+          productName: selectedVariantLabel ? `${product.name} - ${selectedVariantLabel}` : product.name,
+          price: checkoutBasePrice,
+          finalPrice,
+          promoCode: appliedPromo?.code || null,
           userEmail: email
         })
       });
@@ -165,6 +213,55 @@ export default function CheckoutPage() {
                 <div className="space-y-4">
                   <h3 className="text-sm font-black text-white uppercase tracking-widest flex items-center gap-3">
                     <span className="w-6 h-6 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-[10px]">02</span>
+                    Code promo
+                  </h3>
+
+                  <div className="rounded-[24px] border border-orange-500/20 bg-gradient-to-br from-orange-600/10 via-black/30 to-black p-4 shadow-[0_14px_34px_rgba(0,0,0,0.35)]">
+                    <div className="flex flex-col sm:flex-row gap-3">
+                      <div className="relative flex-1">
+                        <Ticket className="absolute left-5 top-1/2 -translate-y-1/2 text-orange-500" size={18} />
+                        <input
+                          type="text"
+                          value={promoCode}
+                          onChange={(e) => {
+                            setPromoCode(e.target.value);
+                            setPromoMessage(null);
+                          }}
+                          placeholder="FITNESS45"
+                          className="w-full h-14 bg-black/70 border border-white/10 rounded-full pl-12 pr-5 text-sm font-black uppercase tracking-widest text-white placeholder:text-zinc-700 focus:border-orange-500 outline-none transition-all"
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleApplyPromo}
+                        className="h-14 px-7 rounded-full bg-white text-black text-xs font-black uppercase tracking-widest hover:bg-orange-100 transition-colors"
+                      >
+                        Appliquer
+                      </button>
+                    </div>
+
+                    {promoMessage && (
+                      <div className={`mt-3 text-xs font-bold ${promoMessage.type === 'success' ? 'text-emerald-400' : 'text-rose-400'}`}>
+                        {promoMessage.text}
+                      </div>
+                    )}
+
+                    {appliedPromo && (
+                      <div className="mt-4 flex items-center justify-between rounded-2xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3">
+                        <span className="text-[10px] font-black uppercase tracking-widest text-emerald-400">
+                          {appliedPromo.code}
+                        </span>
+                        <span className="text-sm font-black text-emerald-400">-{discountAmount}€</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="h-[1px] bg-white/5 w-full" />
+
+                <div className="space-y-4">
+                  <h3 className="text-sm font-black text-white uppercase tracking-widest flex items-center gap-3">
+                    <span className="w-6 h-6 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-[10px]">03</span>
                     Méthode de paiement
                   </h3>
                   
@@ -245,7 +342,7 @@ export default function CheckoutPage() {
                 ) : (
                   <>
                     <ShieldCheck size={20} />
-                    Payer {product.price}€ maintenant
+                    Payer {finalPrice}€ maintenant
                   </>
                 )}
               </button>
@@ -269,25 +366,34 @@ export default function CheckoutPage() {
                 </div>
                 <div>
                   <h4 className="text-xs font-black text-white uppercase tracking-wider mb-1">{product.name}</h4>
+                  {selectedVariantLabel && (
+                    <p className="text-[10px] text-orange-500 font-black uppercase tracking-widest mb-1">{selectedVariantLabel}</p>
+                  )}
                   <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">{product.categories[0]}</p>
                 </div>
                 <div className="ml-auto">
-                  <span className="text-sm font-black text-white">{product.price}€</span>
+                  <span className="text-sm font-black text-white">{checkoutBasePrice}€</span>
                 </div>
               </div>
 
               <div className="space-y-3 pt-4 border-t border-white/5">
                 <div className="flex justify-between text-xs">
                   <span className="text-zinc-500 font-bold">Sous-total</span>
-                  <span className="text-white font-black">{product.price}€</span>
+                  <span className="text-white font-black">{checkoutBasePrice}€</span>
                 </div>
                 <div className="flex justify-between text-xs">
                   <span className="text-zinc-500 font-bold">Frais de service</span>
                   <span className="text-emerald-500 font-black">GRATUIT</span>
                 </div>
+                {appliedPromo && (
+                  <div className="flex justify-between text-xs">
+                    <span className="text-zinc-500 font-bold">Code promo</span>
+                    <span className="text-emerald-500 font-black">-{discountAmount}€</span>
+                  </div>
+                )}
                 <div className="pt-3 border-t border-white/5 flex justify-between">
                   <span className="text-sm font-black text-white uppercase tracking-widest">Total</span>
-                  <span className="text-xl font-black text-orange-500">{product.price}€</span>
+                  <span className="text-xl font-black text-orange-500">{finalPrice}€</span>
                 </div>
               </div>
 

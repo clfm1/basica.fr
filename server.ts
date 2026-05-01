@@ -675,13 +675,14 @@ async function startServer() {
   });
 
   app.post("/api/create-checkout-session", async (req: any, res) => {
-    const { productId, productName, price, userEmail } = req.body;
+    const { productId, productName, price, finalPrice, promoCode, userEmail } = req.body;
+    const checkoutPrice = Number.isFinite(Number(finalPrice)) ? Number(finalPrice) : Number(price);
     
     try {
       const stripeClient = getStripe();
       const origin = req.headers.origin || "http://localhost:3000";
       
-      console.log(`Creating Stripe session for ${userEmail} - Product: ${productName} - Price: ${price}`);
+      console.log(`Creating Stripe session for ${userEmail} - Product: ${productName} - Price: ${checkoutPrice}`);
 
       const session = await stripeClient.checkout.sessions.create({
         line_items: [
@@ -691,7 +692,7 @@ async function startServer() {
               product_data: {
                 name: productName,
               },
-              unit_amount: Math.round(price * 100),
+              unit_amount: Math.round(checkoutPrice * 100),
             },
             quantity: 1,
           },
@@ -703,6 +704,7 @@ async function startServer() {
         metadata: {
           productId,
           productName,
+          promoCode: promoCode || "",
         }
       });
 

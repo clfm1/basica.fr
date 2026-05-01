@@ -268,10 +268,6 @@ export default function ProductDetail({ product, onClose }: ProductDetailProps) 
                 </div>
               </div>
 
-              <div className="rounded-2xl border border-orange-500/20 bg-orange-500/5 p-4 text-[11px] font-semibold leading-relaxed text-zinc-400">
-                Sauf mention expresse contraire, l'achat porte sur le visuel numérique présenté sur cette page produit.
-              </div>
-
               {/* Variant Selector */}
               {product.variants && (
                 <div className="space-y-3 relative">
@@ -348,7 +344,12 @@ export default function ProductDetail({ product, onClose }: ProductDetailProps) 
                   <span className="relative z-10 text-zinc-500 group-hover:text-white transition-colors duration-300">Panier</span>
                 </button>
                 <button 
-                  onClick={() => navigate(`/checkout/${product.id}`)}
+                  onClick={() => {
+                    const params = selectedVariant
+                      ? `?variant=${encodeURIComponent(selectedVariant.label)}&price=${selectedVariant.price}`
+                      : '';
+                    navigate(`/checkout/${product.id}${params}`);
+                  }}
                   className="group relative h-14 rounded-2xl bg-orange-600 text-white font-black text-xs uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-2.5 overflow-hidden shadow-[0_15px_35px_rgba(234,88,12,0.4)]"
                 >
                   <div className="absolute inset-0 bg-gradient-to-tr from-orange-400 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />

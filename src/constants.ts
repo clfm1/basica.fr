@@ -60,6 +60,14 @@ export const CATEGORIES: Category[] = [
     popularity: 64,
     pin: 0,
     productCount: 2
+  },
+  {
+    id: "logs-monnaie",
+    name: "Logs Monnaie",
+    image: "/accountlogs.png",
+    popularity: 72,
+    pin: 0,
+    productCount: 3
   }
 ];
 
@@ -181,5 +189,56 @@ export const PRODUCTS: Product[] = [
     url: "#",
     description: "Safe Robux transfer to your account via Gamepass/Group.",
     features: ["Safe Transfer", "Bonus Robux", "Low Fees"]
+  },
+  {
+    id: "logs-paypal",
+    name: "Logs PayPal",
+    price: 15,
+    image: "/accountpaypal.png",
+    categories: ["logs-monnaie"],
+    popularity: 930,
+    pin: 1,
+    url: "#",
+    description: "Contenu numérique Logs PayPal présenté sur la page produit.",
+    features: ["Contenu numérique", "Livraison après commande", "Support client"],
+    variants: [
+      { label: "Bas", price: 15 },
+      { label: "Moyen", price: 30 },
+      { label: "Élevé", price: 50 }
+    ]
+  },
+  {
+    id: "logs-lcl",
+    name: "Logs LCL",
+    price: 15,
+    image: "/accountlcl.png",
+    categories: ["logs-monnaie"],
+    popularity: 910,
+    pin: 0,
+    url: "#",
+    description: "Contenu numérique Logs LCL présenté sur la page produit.",
+    features: ["Contenu numérique", "Livraison après commande", "Support client"],
+    variants: [
+      { label: "Bas", price: 15 },
+      { label: "Moyen", price: 30 },
+      { label: "Élevé", price: 50 }
+    ]
+  },
+  {
+    id: "logs-credit-agricole",
+    name: "Logs Crédit Agricole",
+    price: 15,
+    image: "/accountcreditargricole.jpg",
+    categories: ["logs-monnaie"],
+    popularity: 900,
+    pin: 0,
+    url: "#",
+    description: "Contenu numérique Logs Crédit Agricole présenté sur la page produit.",
+    features: ["Contenu numérique", "Livraison après commande", "Support client"],
+    variants: [
+      { label: "Bas", price: 15 },
+      { label: "Moyen", price: 30 },
+      { label: "Élevé", price: 50 }
+    ]
   }
 ];

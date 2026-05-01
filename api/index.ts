@@ -784,14 +784,15 @@ app.post("/admin/send-email", authenticateToken, requireAdmin, async (req: any, 
 
 // ── Stripe: Create checkout session ─────────────────────────────────────────
 app.post("/create-checkout-session", async (req: any, res) => {
-  const { productId, productName, price, userEmail } = req.body;
-  logInfo(req, "Stripe checkout attempt", { productId, productName, price, userEmail });
+  const { productId, productName, price, finalPrice, promoCode, userEmail } = req.body;
+  const checkoutPrice = Number.isFinite(Number(finalPrice)) ? Number(finalPrice) : Number(price);
+  logInfo(req, "Stripe checkout attempt", { productId, productName, price, finalPrice, promoCode, userEmail });
 
   try {
     const stripeClient = getStripe();
     const origin = req.headers.origin || "https://basica.fr";
 
-    logInfo(req, "Creating Stripe session", { productId, productName, price, userEmail, origin });
+    logInfo(req, "Creating Stripe session", { productId, productName, checkoutPrice, promoCode, userEmail, origin });
 
     const session = await stripeClient.checkout.sessions.create({
       line_items: [
@@ -799,7 +800,7 @@ app.post("/create-checkout-session", async (req: any, res) => {
           price_data: {
             currency: "eur",
             product_data: { name: productName },
-            unit_amount: Math.round(price * 100),
+            unit_amount: Math.round(checkoutPrice * 100),
           },
           quantity: 1,
         },
@@ -808,13 +809,13 @@ app.post("/create-checkout-session", async (req: any, res) => {
       success_url: `${origin}/my-account?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/checkout/${productId}`,
       customer_email: userEmail,
-      metadata: { productId, productName },
+      metadata: { productId, productName, promoCode: promoCode || "" },
     });
 
     logInfo(req, "Stripe session created", { sessionId: session.id, hasUrl: !!session.url });
     res.json({ id: session.id, url: session.url, requestId: getRequestId(req) });
   } catch (error: any) {
-    logError(req, "Stripe checkout failed", error, { productId, productName, price, userEmail });
+    logError(req, "Stripe checkout failed", error, { productId, productName, price, finalPrice, promoCode, userEmail });
     res.status(500).json({ error: error.message, requestId: getRequestId(req) });
   }
 });
