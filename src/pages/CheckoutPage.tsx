@@ -3,7 +3,7 @@ import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { PRODUCTS } from '../constants';
 import { motion } from 'motion/react';
-import { ShieldCheck, Lock, CreditCard, Apple, Globe, ArrowLeft, Check, Ticket, Info } from 'lucide-react';
+import { ShieldCheck, Lock, CreditCard, Globe, ArrowLeft, Check, Ticket, Info, AlertTriangle, Copy, ExternalLink, X } from 'lucide-react';
 
 async function readApiJson(response: Response) {
   const responseText = await response.text();
@@ -13,6 +13,12 @@ async function readApiJson(response: Response) {
     console.error('API response is not valid JSON:', responseText);
     throw new Error('Erreur serveur temporaire. Veuillez réessayer dans quelques instants.');
   }
+}
+
+function generatePaypalReference() {
+  const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  const randomPart = Array.from({ length: 8 }, () => alphabet[Math.floor(Math.random() * alphabet.length)]).join('');
+  return `BAS-${randomPart}`;
 }
 
 export default function CheckoutPage() {
@@ -31,6 +37,8 @@ export default function CheckoutPage() {
   const [promoCode, setPromoCode] = useState('');
   const [appliedPromo, setAppliedPromo] = useState<{ code: string; percent: number } | null>(null);
   const [promoMessage, setPromoMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [isPaypalModalOpen, setIsPaypalModalOpen] = useState(false);
+  const [paypalReference] = useState(() => generatePaypalReference());
 
   useEffect(() => {
     if (!product) {
@@ -288,7 +296,7 @@ export default function CheckoutPage() {
 
                     <button
                       type="button"
-                      onClick={() => window.open('https://discord.gg/votre-serveur', '_blank')}
+                      onClick={() => setIsPaypalModalOpen(true)}
                       className="group relative p-6 rounded-3xl border-2 border-white/5 bg-white/[0.02] text-zinc-500 hover:border-[#5865F2]/50 hover:bg-[#5865F2]/5 transition-all"
                     >
                       <div className="flex items-center gap-4">
@@ -297,11 +305,11 @@ export default function CheckoutPage() {
                         </div>
                         <div className="text-left">
                           <div className="text-xs font-black uppercase tracking-widest mb-0.5 group-hover:text-white transition-colors">PayPal</div>
-                          <div className="text-[10px] text-zinc-600 font-bold group-hover:text-[#5865F2] transition-colors">Via Discord Support</div>
+                          <div className="text-[10px] text-zinc-600 font-bold group-hover:text-[#5865F2] transition-colors">Paiement manuel</div>
                         </div>
                       </div>
                       <div className="mt-4 pt-4 border-t border-white/5 text-[9px] font-black uppercase tracking-widest text-zinc-600 group-hover:text-zinc-400">
-                         Ouvrir Ticket sur Discord →
+                         Voir les instructions
                       </div>
                     </button>
                   </div>
@@ -417,6 +425,96 @@ export default function CheckoutPage() {
           </div>
         </div>
       </div>
+
+      {isPaypalModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 px-4 py-8 backdrop-blur-sm">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.96, y: 16 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            className="relative w-full max-w-lg rounded-[28px] border border-orange-500/25 bg-[#080307] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.65)]"
+          >
+            <button
+              type="button"
+              onClick={() => setIsPaypalModalOpen(false)}
+              className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/5 text-zinc-400 transition-colors hover:text-white"
+              aria-label="Fermer"
+            >
+              <X size={18} />
+            </button>
+
+            <div className="space-y-5 pr-8">
+              <div className="flex items-center gap-3 text-orange-500">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-orange-500/20 bg-orange-500/10">
+                  <AlertTriangle size={24} />
+                </div>
+                <div>
+                  <h2 className="text-xl font-black uppercase tracking-tight text-white">Instructions PayPal</h2>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500">A suivre exactement</p>
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-white/10 bg-black/50 p-5 space-y-4">
+                <div className="flex items-center justify-between gap-4">
+                  <span className="text-xs font-bold text-zinc-500">Montant a envoyer</span>
+                  <span className="text-2xl font-black text-orange-500">{finalPrice}&euro;</span>
+                </div>
+                <div className="flex items-center justify-between gap-4">
+                  <span className="text-xs font-bold text-zinc-500">Destinataire PayPal</span>
+                  <span className="text-sm font-black text-white">BasileBourdon</span>
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-rose-500/25 bg-rose-500/10 p-4">
+                <p className="text-xs font-bold leading-relaxed text-rose-100">
+                  Le paiement doit etre envoye exclusivement en mode <span className="font-black text-white">Amis et proches</span>.
+                  Si un autre mode est utilise, la commande ne pourra pas etre validee automatiquement et devra etre verifiee par le support.
+                </p>
+              </div>
+
+              <div className="space-y-3">
+                <p className="text-xs font-bold leading-relaxed text-zinc-400">
+                  Dans la note du paiement PayPal, indiquez exactement ce code de commande :
+                </p>
+                <div className="flex flex-col gap-3 sm:flex-row">
+                  <div className="flex min-h-14 flex-1 items-center justify-center rounded-2xl border border-orange-500/30 bg-orange-500/10 px-4 text-lg font-black tracking-[0.22em] text-white">
+                    {paypalReference}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => navigator.clipboard?.writeText(paypalReference)}
+                    className="flex h-14 items-center justify-center gap-2 rounded-2xl bg-white px-5 text-xs font-black uppercase tracking-widest text-black transition-colors hover:bg-orange-100"
+                  >
+                    <Copy size={16} />
+                    Copier
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <button
+                  type="button"
+                  onClick={() => window.open('https://www.paypal.com/', '_blank', 'noopener,noreferrer')}
+                  className="flex h-14 flex-1 items-center justify-center gap-2 rounded-full bg-[#0070ba] text-xs font-black uppercase tracking-widest text-white transition-colors hover:bg-[#005ea6]"
+                >
+                  <ExternalLink size={16} />
+                  Ouvrir PayPal
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsPaypalModalOpen(false)}
+                  className="h-14 rounded-full border border-white/10 px-6 text-xs font-black uppercase tracking-widest text-zinc-300 transition-colors hover:border-white/25 hover:text-white"
+                >
+                  J'ai compris
+                </button>
+              </div>
+
+              <p className="text-center text-[10px] font-medium leading-relaxed text-zinc-600">
+                Une fois le paiement envoye avec le bon code en note, la confirmation se fera automatiquement.
+              </p>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 }
