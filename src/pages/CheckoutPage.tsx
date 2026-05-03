@@ -493,7 +493,7 @@ export default function CheckoutPage() {
               <div className="flex flex-col gap-3 sm:flex-row">
                 <button
                   type="button"
-                  onClick={() => window.open('https://www.paypal.com/', '_blank', 'noopener,noreferrer')}
+                  onClick={() => window.open('https://paypal.me/BasileBourdon', '_blank', 'noopener,noreferrer')}
                   className="flex h-14 flex-1 items-center justify-center gap-2 rounded-full bg-[#0070ba] text-xs font-black uppercase tracking-widest text-white transition-colors hover:bg-[#005ea6]"
                 >
                   <ExternalLink size={16} />
