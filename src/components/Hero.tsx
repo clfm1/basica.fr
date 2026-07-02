@@ -165,7 +165,7 @@ export default function Hero() {
                 <ShoppingCart size={18} />
                 <span>Voir le shop Fitness & Gaming</span>
               </a>
-              <a href="https://discord.gg/basico" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2.5 px-6 py-3 rounded-full font-bold bg-zinc-950/80 border border-white/10 text-white transition-all hover:bg-zinc-900 hover:border-white/20 hover:-translate-y-0.5 active:scale-95">
+              <a href="https://discord.gg/DM5v3DZ67n" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2.5 px-6 py-3 rounded-full font-bold bg-gradient-to-b from-[#6a76f3] via-[#5865F2] to-[#3c48d6] text-white shadow-[0_0_22px_rgba(88,101,242,0.5)] transition-all hover:shadow-[0_0_34px_rgba(88,101,242,0.75)] hover:-translate-y-0.5 active:scale-95">
                 <Disc size={18} />
                 <span>Join Discord support</span>
               </a>

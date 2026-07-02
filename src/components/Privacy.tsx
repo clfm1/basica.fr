@@ -91,7 +91,7 @@ export default function Privacy() {
 
             <section>
               <h2 className="text-xl font-black tracking-widest uppercase mb-4 text-white">10. Informations de Contact</h2>
-              <p>Discord : discord.gg/basico</p>
+              <p>Discord : discord.gg/DM5v3DZ67n</p>
             </section>
 
             <div className="pt-12 border-t border-white/10">

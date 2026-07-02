@@ -101,7 +101,7 @@ export default function Terms() {
             <section>
               <h2 className="text-xl font-black tracking-widest uppercase mb-4 text-white">14. CONTACT</h2>
               <p className="text-zinc-400 leading-relaxed">Des questions ? Contactez-nous via :</p>
-              <p className="text-zinc-400 leading-relaxed">Discord : discord.gg/basico</p>
+              <p className="text-zinc-400 leading-relaxed">Discord : discord.gg/DM5v3DZ67n</p>
             </section>
 
             <div className="pt-12 border-t border-white/10">

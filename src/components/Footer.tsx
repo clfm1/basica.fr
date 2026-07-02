@@ -35,8 +35,8 @@ export default function Footer() {
               Le meilleur shop pour vos abonnements Basic-Fit, Fitness Park et vos comptes Fortnite/Valorant. Livraison instantanée, paiements sécurisés et support Discord 24/7.
             </p>
 
-            <a href="https://discord.gg/basico" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2.5 px-4 py-2.5 rounded-full bg-zinc-900/50 border border-white/10 text-white text-sm hover:border-orange-500/50 hover:bg-zinc-800 transition-all backdrop-blur-md">
-              <Disc size={18} className="text-orange-500" />
+            <a href="https://discord.gg/DM5v3DZ67n" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2.5 px-4 py-2.5 rounded-full bg-[#5865F2] font-bold text-white text-sm shadow-[0_0_18px_rgba(88,101,242,0.5)] hover:bg-[#6a76f3] hover:shadow-[0_0_28px_rgba(88,101,242,0.75)] transition-all">
+              <Disc size={18} className="text-white" />
               <span>Discord server</span>
             </a>
           </div>
@@ -73,7 +73,7 @@ export default function Footer() {
             </h4>
             <div className="flex flex-col gap-2.5">
               <a 
-                href="https://discord.gg/basico" 
+                href="https://discord.gg/DM5v3DZ67n"
                 target="_blank" 
                 rel="noopener noreferrer" 
                 className="text-sm text-zinc-400 hover:text-white transition-colors flex items-center gap-2 group"

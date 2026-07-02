@@ -126,7 +126,7 @@ export default function Navbar() {
               )}
             </button>
 
-            <a href="https://discord.gg/basico" target="_blank" rel="noopener noreferrer" className="hidden lg:flex items-center gap-2 px-4.5 py-2.5 rounded-full bg-orange-600/80 border border-orange-500 hover:bg-orange-500 hover:shadow-[0_0_18px_rgba(255,112,0,0.45)] transition-all group">
+            <a href="https://discord.gg/DM5v3DZ67n" target="_blank" rel="noopener noreferrer" className="hidden lg:flex items-center gap-2 px-4.5 py-2.5 rounded-full bg-[#5865F2] border border-[#7983f5] shadow-[0_0_18px_rgba(88,101,242,0.55)] hover:bg-[#6a76f3] hover:shadow-[0_0_28px_rgba(88,101,242,0.8)] hover:-translate-y-0.5 transition-all group">
               <Disc size={18} className="group-hover:rotate-[360deg] transition-transform duration-700" />
               <span className="font-medium text-[0.95rem]">Join Discord</span>
             </a>
@@ -161,11 +161,11 @@ export default function Navbar() {
                     {link.name}
                   </Link>
                 ))}
-                <a 
-                  href="https://discord.gg/basico" 
-                  target="_blank" 
+                <a
+                  href="https://discord.gg/DM5v3DZ67n"
+                  target="_blank"
                   rel="noopener noreferrer"
-                  className="block py-3 text-[0.95rem] text-gray-300 hover:text-white transition-colors"
+                  className="flex items-center justify-center gap-2 my-3 py-3 rounded-full text-[0.95rem] font-bold text-white bg-[#5865F2] shadow-[0_0_18px_rgba(88,101,242,0.55)] transition-colors"
                 >
                   Join Discord
                 </a>
