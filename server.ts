@@ -685,6 +685,7 @@ async function startServer() {
       console.log(`Creating Stripe session for ${userEmail} - Product: ${productName} - Price: ${checkoutPrice}`);
 
       const session = await stripeClient.checkout.sessions.create({
+        payment_method_types: ["card", "sepa_debit"],
         line_items: [
           {
             price_data: {

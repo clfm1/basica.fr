@@ -795,6 +795,7 @@ app.post("/create-checkout-session", async (req: any, res) => {
     logInfo(req, "Creating Stripe session", { productId, productName, checkoutPrice, promoCode, userEmail, origin });
 
     const session = await stripeClient.checkout.sessions.create({
+      payment_method_types: ["card", "sepa_debit"],
       line_items: [
         {
           price_data: {

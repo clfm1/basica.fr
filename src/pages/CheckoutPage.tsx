@@ -289,7 +289,7 @@ export default function CheckoutPage() {
                         </div>
                         <div className="text-left">
                           <div className="text-xs font-black uppercase tracking-widest mb-0.5">Stripe</div>
-                          <div className="text-[10px] text-zinc-500 font-bold">Carte de crédit / Débit</div>
+                          <div className="text-[10px] text-zinc-500 font-bold">Carte / Prélèvement SEPA</div>
                         </div>
                       </div>
                     </button>
@@ -320,7 +320,7 @@ export default function CheckoutPage() {
                       Paiement sécurisé par Stripe
                     </div>
                     <p className="text-[10px] text-zinc-500 leading-relaxed font-medium">
-                      Vous allez être redirigé vers la page de paiement sécurisée de Stripe pour finaliser votre achat. Vos données sont cryptées et nous n'y avons pas accès.
+                      Vous allez être redirigé vers la page de paiement sécurisée de Stripe pour finaliser votre achat par carte ou prélèvement SEPA. Vos données sont cryptées et nous n'y avons pas accès.
                     </p>
                   </div>
                 </div>
